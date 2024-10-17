@@ -243,7 +243,6 @@ export default function useCripa() {
             const solutionArray = normalizeText(solution).split("");
             let termGuesses = [];
     
-            console.log(".letter--${index + 1}", `.letter--${index + 1}`);
             solutionArray.forEach((letter, letterIndex) => {
                 const indexInTerm = normalizeText(termWithoutSpaces.toLowerCase()).indexOf(normalizeText(letter?.toLowerCase() ?? ""));
                 const elementsToCheck = element?.querySelectorAll(`.letter-${alphabetMap[letter.toLowerCase()]}`);
@@ -252,22 +251,15 @@ export default function useCripa() {
                 const tdActive = elementToCheck?.closest("td");
                 
                 if (elementToCheck && tdActive) {
-                    // if (index+1 === 7) console.log("indexInTerm", indexInTerm, "index", index, "letter", letter, "termWithoutSpaces", termWithoutSpaces);
 
-                    if (indexInTerm === index) {
-                        // console.log("indexInTerm === index", indexInTerm, index);
-                        // console.log("elementToCheck", elementToCheck, "elementToCheck.textContent", elementToCheck.textContent, "letter", letter.toUpperCase());
-                        // console.log("elementToCheck.textContent === letter.toUpperCase()", elementToCheck.textContent === letter.toUpperCase());
-                        
+                    if (indexInTerm === index) {                        
                         termWithoutSpaces = termWithoutSpaces.substring(0, indexInTerm) + " " + termWithoutSpaces.substring(indexInTerm + 1);
                         tdActive.classList.remove("bg-green-300", "bg-red-400");
                         if (elementToCheck.textContent === letter.toUpperCase().trim()) {
-                            console.log("entrou no if");
                             tdActive.classList.add("bg-green-300");
                             checkedIndexes.push(indexInTerm);
                 
                         } else {
-                            console.log("entrou no else");
                             tdActive.classList.add("bg-red-400");
                         }
                     } 
@@ -313,7 +305,6 @@ export default function useCripa() {
             if (term) {
                 const termArray = new Array(1).fill(0);
                 termArray[0] = term;
-                console.log("termArray", termArray);
     
                 const tipForTerm = await generateTips(termArray, apiKey);
                 setTermTip(tipForTerm);
