@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 
 export async function GET() {
     try {
-        const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'fetchWordData', 'data', 'data.txt');
+        const filePath = path.join(process.cwd(), 'src', 'app', 'api', 'fetchWordData', 'data', 'eight_letter_data.txt');
 
         const data = await fs.readFile(filePath, 'utf-8');
 

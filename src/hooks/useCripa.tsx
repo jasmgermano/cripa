@@ -1,3 +1,4 @@
+import { generateTips } from '@/services/geminiService';
 import React, { useEffect, useState } from 'react';
 
 interface WordData {
@@ -12,6 +13,8 @@ export default function useCripa() {
     const [Trys, setTrys] = useState<{ [key: number]: string }>({});
     const [term, setTerm] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(true);  // Estado de loading
+    const [soltionsTips, setSolutionsTips] = useState<{ clue: any }[]>([]);
+    const [termTip, setTermTip] = useState<{ clue: any }[]>([]);
     let uniqueIndexTerm = -1;
 
     // Função para buscar os dados das palavras
@@ -26,8 +29,6 @@ export default function useCripa() {
             setData(result);
         } catch (error) {
             console.error(error);
-        } finally {
-            setLoading(false);  // Termina o carregamento
         }
     };
 
@@ -39,15 +40,13 @@ export default function useCripa() {
         let solutions: string[] = [];
         let availableWords = [...data.words];
 
-        console.log(termArray);
-
         if (data.words.length > 0) {
             while (solutions.length < 14 && availableWords.length > 0) {
                 termArray.forEach((letter: string) => {
                     let found = false;
                     while (!found) {
                         const index = Math.floor(Math.random() * availableWords.length);
-                        const word = availableWords[index];
+                        const word = availableWords[index].replace(/\s+/g, "");
                         const normalizedWord = normalizeText(word); 
                         const letterIndex = normalizedWord.toLowerCase().indexOf(letter.toLowerCase());
 
@@ -115,11 +114,13 @@ export default function useCripa() {
     // Função para manipular o evento de keyup
     const handleKeyUp = (event: KeyboardEvent) => {
         const activeElements = document.querySelectorAll(".active");
+        const eventKey = event.key.toLowerCase();
         let mapTrys = { ...Trys };
 
         activeElements.forEach((element) => {
-            const classList = element.classList;
             let number = 0;
+            const spanActive = element.querySelectorAll("span")[1];
+            const classList = spanActive.classList;
 
             classList.forEach((className) => {
                 if (/^letter-\d+$/.test(className)) {
@@ -127,13 +128,14 @@ export default function useCripa() {
                 }
             });
 
-            if (event.key === 'Backspace') {
-                element.textContent = "";
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+                spanActive.textContent = "";
                 delete mapTrys[number];
-            } else if (/^[A-Za-z]$/.test(event.key)) {
+            } else if (/^[A-Za-z]$/.test(eventKey)) {
                 let foundNumber: number | null = null;
+
                 for (const [key, value] of Object.entries(mapTrys)) {
-                    if (value === normalizeText(event.key) && parseInt(key) !== number) {
+                    if (value === normalizeText(eventKey) && parseInt(key) !== number && number !== 0) {
                         foundNumber = parseInt(key);
                         const foundElements = document.querySelectorAll(`.letter-${foundNumber}`);
                         foundElements.forEach((el) => {
@@ -144,8 +146,8 @@ export default function useCripa() {
                     }
                 }
 
-                element.textContent = event.key.toUpperCase();
-                mapTrys[number] = event.key;
+                spanActive.textContent = eventKey.toUpperCase();
+                mapTrys[number] = eventKey;
                 setTrys(mapTrys);
             }
         });
@@ -182,12 +184,9 @@ export default function useCripa() {
 
         solutionArray.forEach((solutionLetter, index) => {
             const isTermLetter = index === letterIndexInSolution;
-            console.log(solutionLetter, isTermLetter);
             
             if (solutionLetter in alphabetMap) {
                 if (isTermLetter) {
-                    console.log("uniqueIndexTerm", uniqueIndexTerm);
-                    console.log("solutionLetter", solutionLetter);
                     updateArray.push({
                         number: uniqueIndexTerm,
                         isTermLetter: isTermLetter
@@ -214,8 +213,6 @@ export default function useCripa() {
                 .map((solution, index) => {
                     const termWithoutSpaces = term.replace(/\s/g, "");
                     const letterIndexInSolution = normalizeText(solution.toLowerCase()).indexOf(normalizeText(termWithoutSpaces[index]?.toLowerCase() ?? ""));
-                    console.log("letterIndexInSolution", letterIndexInSolution);
-                    console.log("term[index]", term[index]);
 
                     return compareLetters(solution, letterIndexInSolution);
                 })
@@ -226,47 +223,113 @@ export default function useCripa() {
     }, [solutions, alphabetMap]);
 
     const handleVerify = () => {
-        let checkedIndexes : number[] = [];
+        let checkedIndexes: number[] = [];
         let termWithoutSpaces = term.replace(/\s/g, "");
-        
+        const activeElements = document.querySelectorAll(".active");
+    
+        // Remover a classe 'active' de todos os elementos
+        activeElements.forEach((element) => {
+            element.classList.remove("active");
+        });
+    
+        // Limpeza das classes de fundo antes de adicionar novas
+        const allTdElements = document.querySelectorAll("td");
+        allTdElements.forEach((td) => {
+            td.classList.remove("bg-green-200", "bg-green-400", "bg-red-200");
+        });
+    
         solutions.forEach((solution, index) => {
             const element = document.querySelector(`.row-${index}`);
             const solutionArray = normalizeText(solution).split("");
             let termGuesses = [];
-            
-            
+    
+            console.log(".letter--${index + 1}", `.letter--${index + 1}`);
             solutionArray.forEach((letter, letterIndex) => {
                 const indexInTerm = normalizeText(termWithoutSpaces.toLowerCase()).indexOf(normalizeText(letter?.toLowerCase() ?? ""));
                 const elementsToCheck = element?.querySelectorAll(`.letter-${alphabetMap[letter.toLowerCase()]}`);
+            
+                const elementToCheck = element?.querySelector(`.letter--${index + 1}`);
+                const tdActive = elementToCheck?.closest("td");
+                
+                if (elementToCheck && tdActive) {
+                    // if (index+1 === 7) console.log("indexInTerm", indexInTerm, "index", index, "letter", letter, "termWithoutSpaces", termWithoutSpaces);
 
-                console.log(letter, indexInTerm, elementsToCheck);
-                if (indexInTerm === index) {
-                    const elementToCheck = element?.querySelector(`.letter--${index + 1}`);
-                    if (elementToCheck) {
-                        elementToCheck.classList.add("bg-green-200");
-                        checkedIndexes.push(indexInTerm);
+                    if (indexInTerm === index) {
+                        // console.log("indexInTerm === index", indexInTerm, index);
+                        // console.log("elementToCheck", elementToCheck, "elementToCheck.textContent", elementToCheck.textContent, "letter", letter.toUpperCase());
+                        // console.log("elementToCheck.textContent === letter.toUpperCase()", elementToCheck.textContent === letter.toUpperCase());
                         
                         termWithoutSpaces = termWithoutSpaces.substring(0, indexInTerm) + " " + termWithoutSpaces.substring(indexInTerm + 1);
-                        console.log("termWithoutSpaces", termWithoutSpaces);
-                    }
+                        tdActive.classList.remove("bg-green-300", "bg-red-400");
+                        if (elementToCheck.textContent === letter.toUpperCase().trim()) {
+                            console.log("entrou no if");
+                            tdActive.classList.add("bg-green-300");
+                            checkedIndexes.push(indexInTerm);
+                
+                        } else {
+                            console.log("entrou no else");
+                            tdActive.classList.add("bg-red-400");
+                        }
+                    } 
                 }
-
+            
                 if (elementsToCheck) {
                     elementsToCheck.forEach((elementToCheck) => {
-                        if (elementToCheck.textContent === letter.toUpperCase()) {
-                            elementToCheck.classList.add("bg-green-200");
-                            termGuesses.push({ letter: letter, index: letterIndex });
-                        } else {
-                            elementToCheck.classList.add("bg-red-200");
+                        const tdActive = elementToCheck?.closest("td");
+            
+                        if (tdActive) {
+                            tdActive.classList.remove("bg-green-400", "bg-red-300");
+            
+                            if (elementToCheck.textContent === letter.toUpperCase()) {
+                                tdActive.classList.add("bg-green-400");
+                                termGuesses.push({ letter: letter, index: letterIndex });
+                            } else {
+                                tdActive.classList.add("bg-red-300");
+                            }
                         }
                     });
                 } else {
                     console.log("elemento não encontrado", letter);
                 }
-                
-            });
+            });            
         });
+    };
+    
+
+    const handleGenerateTips = async () => {
+        try {
+            setLoading(true);
+            const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+
+            if (!apiKey) {
+                throw new Error("API Key não encontrada");
+            }
+
+            if (solutions.length !== 0) {
+                const tipsforSolutions = await generateTips(solutions, apiKey);
+                setSolutionsTips(tipsforSolutions);
+            }
+
+            if (term) {
+                const termArray = new Array(1).fill(0);
+                termArray[0] = term;
+                console.log("termArray", termArray);
+    
+                const tipForTerm = await generateTips(termArray, apiKey);
+                setTermTip(tipForTerm);
+            }
+
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
-    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify };
+    useEffect(() => {
+        handleGenerateTips();
+    }, [term]);
+
+    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips };
 }
