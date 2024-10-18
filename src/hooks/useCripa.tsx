@@ -21,7 +21,9 @@ export default function useCripa() {
     const fetchWordData = async () => {
         try {
             setLoading(true);  // Inicia o carregamento
-            const response = await fetch("/api/fetchWordData");
+            const response = await fetch("/api/fetchWordData", {
+                cache: 'no-store',
+              });
             if (!response.ok) {
                 throw new Error("Erro ao buscar os dados da palavra");
             }
@@ -46,7 +48,7 @@ export default function useCripa() {
                     let found = false;
                     while (!found) {
                         const index = Math.floor(Math.random() * availableWords.length);
-                        const word = availableWords[index].replace(/\s+/g, "");
+                        const word = availableWords[index];
                         const normalizedWord = normalizeText(word); 
                         const letterIndex = normalizedWord.toLowerCase().indexOf(letter.toLowerCase());
 
@@ -68,7 +70,10 @@ export default function useCripa() {
     // Função para buscar os termos
     const fetchTerms = async () => {
         try {
-            const response = await fetch(`https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/b5fb1596d2e6c5ab551201a05d2c718f4e955ee4/termos.json`);
+            const response = await fetch(`https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/2abf2809836b2e48934bbe22d56515c627709730/termos.json`, {
+                cache: 'no-store',
+            });
+
             if (!response.ok) {
                 throw new Error("Erro ao buscar os termos");
             }
@@ -134,6 +139,7 @@ export default function useCripa() {
             } else if (/^[A-Za-z]$/.test(eventKey)) {
                 let foundNumber: number | null = null;
 
+                
                 for (const [key, value] of Object.entries(mapTrys)) {
                     if (value === normalizeText(eventKey) && parseInt(key) !== number && number !== 0) {
                         foundNumber = parseInt(key);
@@ -146,6 +152,7 @@ export default function useCripa() {
                     }
                 }
 
+                element.classList.remove("bg-red-300", "bg-red-400");
                 spanActive.textContent = eventKey.toUpperCase();
                 mapTrys[number] = eventKey;
                 setTrys(mapTrys);

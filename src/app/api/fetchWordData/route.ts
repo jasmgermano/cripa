@@ -8,7 +8,7 @@ export async function GET() {
 
         const data = await fs.readFile(filePath, 'utf-8');
 
-        const words = data.split('\n').map((word) => word.trim()).filter((word) => word.length === 8);
+        const words = data.split('\n').map((word) => word.trim()).filter((word) => word.replace(/\s+/g, "").length === 8);
 
         return NextResponse.json({ words });
     } catch (error) {
