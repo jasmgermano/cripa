@@ -63,8 +63,6 @@ export default function useCripa() {
             }
         }
 
-        console.log("Soluções", solutions);
-
         setSolutions(solutions);
         setTerm(normalizedTerm);
     };
