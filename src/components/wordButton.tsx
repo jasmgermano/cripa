@@ -7,7 +7,7 @@ interface WordButtonProps {
     highlight: number; // índice da letra para o termo vertical
 }
 
-export default function WordButton({ id, solution, crypto, highlight }: WordButtonProps) {
+export default function WordButton({ crypto }: WordButtonProps) {
     const [isWordActive, setIsWordActive] = useState(true);
     const wordButtonArray = new Array(8).fill(0);
 

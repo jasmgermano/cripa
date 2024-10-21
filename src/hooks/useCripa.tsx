@@ -1,5 +1,7 @@
 import { generateTips } from '@/services/geminiService';
 import React, { useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
+
 
 interface WordData {
     words: string[];
@@ -16,7 +18,7 @@ export default function useCripa() {
     const [soltionsTips, setSolutionsTips] = useState<{ clue: any }[]>([]);
     const [termTip, setTermTip] = useState<{ clue: any }[]>([]);
     let uniqueIndexTerm = -1;
-
+    const [isAllCorrect, setIsAllCorrect] = useState<boolean>(false);
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
         try {
@@ -60,6 +62,8 @@ export default function useCripa() {
                 });
             }
         }
+
+        console.log("Soluções", solutions);
 
         setSolutions(solutions);
         setTerm(normalizedTerm);
@@ -234,6 +238,7 @@ export default function useCripa() {
         let checkedIndexes: number[] = [];
         let termWithoutSpaces = term.replace(/\s/g, "");
         const activeElements = document.querySelectorAll(".active");
+        let correct = true;
     
         // Remover a classe 'active' de todos os elementos
         activeElements.forEach((element) => {
@@ -269,6 +274,7 @@ export default function useCripa() {
                 
                         } else {
                             tdActive.classList.add("bg-red-400");
+                            correct = false;
                         }
                     } 
                 }
@@ -285,6 +291,7 @@ export default function useCripa() {
                                 termGuesses.push({ letter: letter, index: letterIndex });
                             } else {
                                 tdActive.classList.add("bg-red-300");
+                                correct = false;
                             }
                         }
                     });
@@ -293,7 +300,36 @@ export default function useCripa() {
                 }
             });            
         });
+
+        setIsAllCorrect(correct);
     };
+
+    useEffect(() => {
+        if (isAllCorrect) {
+            const duration = 10 * 1000;
+            const end = Date.now() + duration;
+
+            const colors = ['#ff0a54', '#ff477e', '#ff85a1', '#fbb1bd', '#f9bec7']; 
+
+            const frame = () => {
+                confetti({
+                    particleCount: 5, // Número de confetes por chamada
+                    angle: 90, // Ângulo para cair de cima para baixo
+                    spread: 45, // Spread pequeno para cair de forma mais linear
+                    origin: { x: Math.random(), y: 0 }, // Origem aleatória ao longo do topo
+                    gravity: 1, // Gravidade alta para simular queda rápida
+                    shapes: ['star'], // Formato de estrela
+                    colors: colors, 
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame); // Continua até o fim da duração
+                }
+            };
+
+            frame(); // Inicia a animação dos confetes caindo
+        }
+    }, [isAllCorrect]);
     
 
     const handleGenerateTips = async () => {
@@ -330,5 +366,5 @@ export default function useCripa() {
         handleGenerateTips();
     }, [term]);
 
-    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips };
+    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect };
 }

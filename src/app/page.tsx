@@ -6,10 +6,12 @@ import Logo from "@/assets/logo.svg";
 import Image from "next/image";
 import Star from "@/assets/star.svg";
 import Button from "@/components/button";
+import Modal from "@/components/modal";
 
 export default function Home() {
-  const { solutions, handleKeyUp, generateAlphabetMap, resultArray, term, loading, handleVerify, soltionsTips, termTip } = useCripa();
+  const { solutions, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect } = useCripa();
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     window.addEventListener("keyup", handleKeyUp);
@@ -21,6 +23,10 @@ export default function Home() {
   useEffect(() => {
     generateAlphabetMap();
   }, []);
+
+  useEffect(() => {
+    setShowSuccessModal(isAllCorrect);
+  });
 
   const toggleInstructions = () => {
     setInstructionsOpen(!isInstructionsOpen);
@@ -54,7 +60,7 @@ export default function Home() {
   }
 
   return (
-    <div className="pb-10">
+    <div className="">
       <menu className="relative h-10 bg-custom-green flex items-center justify-start">
         <div className="absolute top-10 transform -translate-y-1/2 flex justify-center items-center h-11 w-full">
           <Image src={Logo} alt="Logo" className="h-full" />
@@ -69,7 +75,7 @@ export default function Home() {
           </li>
         </ul>
       </menu>
-      <main className="px-3 lg:px-48 mt-16 flex flex-col gap-10 justify-center items-center">
+      <main className="px-3 lg:px-48 mt-16 flex flex-col gap-10 justify-center items-center mb-10">
         <div className="hint-bar py-10 text-center">
           <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>{termTip[0]?.clue}
         </div>
@@ -86,26 +92,20 @@ export default function Home() {
           </tbody>
         </table>
         <Button text="Verificar" onClick={handleVerify} />
+        {showSuccessModal && (
+          <Modal isOpen={isAllCorrect} onClose={() => setIsAllCorrect(false)} color="custom-green">
+            <div className="flex items-center gap-3 mb-5">
+              <h2 className="text-2xl font-bold">Parabéns!</h2>
+              <Image src={Star} alt="Estrela" className="h-5 w-5" />
+            </div>
+            <p className="text-xl">🎉​ Divou! Você acertou todas as palavras! 🎉​</p>
+            <div className="w-full flex justify-center mt-4">
+              <Button text="Carregar novo jogo" color="custom-pink" onClick={() => window.location.reload()} />
+            </div>
+          </Modal>
+        )}
         {isInstructionsOpen && (
-          <div className="fixed inset-0 bg-custom-green bg-opacity-50 flex items-center justify-center z-50 px-6">
-            <div className="border-2 border-custom-gray bg-custom-beige shadow-custom p-6 rounded-lg shadow-lg relative max-w-[800px] mx-auto">
-              <button
-                className="absolute top-4 right-4"
-                onClick={toggleInstructions}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M13.414 10l5.293-5.293a1 1 0 10-1.414-1.414L12 8.586 6.707 3.293a1 1 0 00-1.414 1.414L10.586 10l-5.293 5.293a1 1 0 101.414 1.414L12 11.414l5.293 5.293a1 1 0 001.414-1.414L13.414 10z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+          <Modal isOpen={isInstructionsOpen} onClose={toggleInstructions} color="custom-green">             
               <div className="flex items-center gap-3 mb-5">
                 <h2 className="text-xl font-bold">Como Jogar</h2>
                 <Image src={Star} alt="Fechar" className="h-5 w-5" />
@@ -132,12 +132,14 @@ export default function Home() {
                 <li>Não há diferenciação de letras com acentuação. Exemplo: "A" e "Á" são consideradas iguais.</li>
                 <li>Ao preencher todas as palavras, clique em "Verificar". Onde estiver errado, as casas ficarão vermelhas.</li>
               </ul>
-
               <Button text="Fechar" onClick={toggleInstructions} />
-            </div>
-          </div>
+          </Modal>
         )}
       </main>
+      <footer className="w-full text-center flex flex-col gap-4">
+        <span className="text-custom-gray font-bold">As dicas são geradas pelo gemini e podem não fazer sentido. Me avise se tiver algo errado!</span>
+        <span className="text-custom-gray w-full py-2 bg-custom-green"><a href="/" className="underline">Cripa</a> ★ Desenvolvido por <a href="https://www.linkedin.com/in/jasmgermano/" className="underline">Jasmine</a></span>
+      </footer>
     </div>
   );
 }
