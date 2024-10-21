@@ -30,6 +30,13 @@ export default function WordButton({ id, solution, crypto, highlight }: WordButt
 
             if (btnActive && !btnActive.classList.contains("active")) btnActive.classList.add("active");
         });
+
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            const hiddenInput = document.getElementById('hiddenInput');
+            if (hiddenInput) {
+                hiddenInput.focus();
+            }
+        }
     };
 
     return (
@@ -41,12 +48,13 @@ export default function WordButton({ id, solution, crypto, highlight }: WordButt
                 >
                     {crypto[index] ? (
                         <button
-                            className="w-full h-full flex flex-col items-center pb-2"
-                            onClick={() => handleWordSelection(crypto[index].number)}
-                            onFocus={() => handleWordSelection(crypto[index].number)}
+                        className="w-full h-full flex flex-col items-center pb-2"
+                        onClick={() => handleWordSelection(crypto[index].number)}
+                        onFocus={() => handleWordSelection(crypto[index].number)}
                         >
                             <span className="text-xs text-left w-full pl-1">{!crypto[index].isTermLetter ? crypto[index].number : "?"}</span>
                             <span className={`text-xl h-7 letter-${crypto[index].number} bg-none`}></span>
+                            <input type="text" className="hidden" id="hiddenInput" />
                         </button>
                     ) : (
                         <span className="text-xs">-</span>
