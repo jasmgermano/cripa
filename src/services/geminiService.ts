@@ -44,8 +44,13 @@ export const generateTips = async (words: string[], apiKey: string) => {
     const result = await model.generateContent(prompt);
     let content = result.response.candidates?.[0].content.parts[0].text || "";
 
+    // Limpeza do conteúdo gerado
+    content = content
+      .replace(/\n/g, '') // Remove quebras de linha
+      .replace(/,\s*]/g, ']') // Remove vírgulas extras antes do fechamento do array
+
     // Tentar extrair apenas o array JSON do conteúdo retornado
-    const arrayMatch = content.match(/\[(.|\n)*\]/); // Ajuste para suportar múltiplas linhas
+    const arrayMatch = content.match(/\[(.*?)\]/); // Captura o array JSON
     if (arrayMatch) {
       content = arrayMatch[0];
     } else {

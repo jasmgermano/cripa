@@ -20,7 +20,6 @@ export default function useCripa() {
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
         try {
-            setLoading(true);  // Inicia o carregamento
             const response = await fetch("/api/fetchWordData", {
                 cache: 'no-store',
               });
@@ -138,8 +137,7 @@ export default function useCripa() {
                 delete mapTrys[number];
             } else if (/^[A-Za-z]$/.test(eventKey)) {
                 let foundNumber: number | null = null;
-
-                
+         
                 for (const [key, value] of Object.entries(mapTrys)) {
                     if (value === normalizeText(eventKey) && parseInt(key) !== number && number !== 0) {
                         foundNumber = parseInt(key);
@@ -156,6 +154,9 @@ export default function useCripa() {
                 spanActive.textContent = eventKey.toUpperCase();
                 mapTrys[number] = eventKey;
                 setTrys(mapTrys);
+            } else if (event.key === 'ArrowUp') {
+                
+                console.log("ArrowUp");
             }
         });
     };
