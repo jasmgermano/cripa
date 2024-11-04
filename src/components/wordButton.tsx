@@ -1,66 +1,88 @@
-import React, { useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface WordButtonProps {
-    id: number;
-    solution: string;
-    crypto: { number: number, isTermLetter: boolean }[];
-    highlight: number; // índice da letra para o termo vertical
+  id: number;
+  solution: string;
+  crypto: { number: number, isTermLetter: boolean }[];
+  highlight: number;
+  focusedIndex: number | null;
+  focusedRow: number | null;
+  setFocus: (row: number, index: number) => void;
 }
 
-export default function WordButton({ crypto }: WordButtonProps) {
-    const [isWordActive, setIsWordActive] = useState(true);
-    const wordButtonArray = new Array(8).fill(0);
+export default function WordButton({
+  crypto,
+  id,
+  focusedIndex,
+  focusedRow,
+  setFocus
+}: WordButtonProps) {
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]); // Refs for buttons
 
-    const handleWordSelection = (number: number) => {
-        setIsWordActive(!isWordActive);
+  const handleWordSelection = (number: number, index: number) => {
+    setFocus(id, index); // Update focus state in the parent component
 
-        const wordElements = document.querySelectorAll(`.letter-${number}`);
-        const currentActive = document.querySelectorAll(".active");
-        
-        currentActive.forEach((element) => {
-            const btnActive = element.closest("td"); 
+    const wordElements = document.querySelectorAll(`.letter-${number}`);
+    const currentActive = document.querySelectorAll(".active");
 
-            if (btnActive) {
-                btnActive.classList.remove("active");
-            }
-        });
+    currentActive.forEach((element) => {
+      const btnActive = element.closest("td");
+      if (btnActive) {
+        btnActive.classList.remove("active");
+      }
+    });
 
-        wordElements.forEach((element) => {
-            const btnActive = element.closest("td");
+    wordElements.forEach((element) => {
+      const btnActive = element.closest("td");
+      if (btnActive && !btnActive.classList.contains("active"))
+        btnActive.classList.add("active");
+    });
 
-            if (btnActive && !btnActive.classList.contains("active")) btnActive.classList.add("active");
-        });
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      const hiddenInput = document.getElementById('hiddenInput');
+      if (hiddenInput) {
+        hiddenInput.focus();
+      }
+    }
+  };
 
-        if (/Mobi|Android/i.test(navigator.userAgent)) {
-            const hiddenInput = document.getElementById('hiddenInput');
-            if (hiddenInput) {
-                hiddenInput.focus();
-            }
-        }
-    };
+  useEffect(() => {
+    if (focusedRow === id && focusedIndex !== null) {
+      buttonRefs.current[focusedIndex]?.focus();
+    }
+  }, [focusedRow, focusedIndex]);
 
-    return (
-        <>
-            {crypto && crypto.length > 0 && wordButtonArray.map((_, index) => (
-                <td 
-                    key={index} 
-                    className={`h-full border-2 border-custom-gray w-14 ${crypto[index] && crypto[index].isTermLetter ? "bg-custom-green border-black" : ""}`}
-                >
-                    {crypto[index] ? (
-                        <button
-                        className="w-full h-full flex flex-col items-center pb-2"
-                        onClick={() => handleWordSelection(crypto[index].number)}
-                        onFocus={() => handleWordSelection(crypto[index].number)}
-                        >
-                            <span className="text-xs text-left w-full pl-1">{!crypto[index].isTermLetter ? crypto[index].number : "?"}</span>
-                            <span className={`text-xl h-7 letter-${crypto[index].number} bg-none`}></span>
-                            <input type="text" className="hidden" id="hiddenInput" />
-                        </button>
-                    ) : (
-                        <span className="text-xs">-</span>
-                    )}
-                </td>
-            ))}
-        </>
-    );
+  return (
+    <>
+      {crypto &&
+        crypto.length > 0 &&
+        crypto.map((cell, index) => (
+          <td
+            key={index}
+            className={`h-full border-2 border-custom-gray w-14 ${
+              cell.isTermLetter ? 'bg-custom-green border-black' : ''
+            } ${focusedRow === id && focusedIndex === index ? 'active-cell' : ''}`}
+            id={`td-${index}-row-${id}`}
+          >
+            {cell ? (
+              <button
+                ref={(el) => { buttonRefs.current[index] = el; }}
+                className="w-full h-full flex flex-col items-center pb-2"
+                onClick={() => handleWordSelection(cell.number, index)}
+                onFocus={() => handleWordSelection(cell.number, index)}
+                tabIndex={focusedRow === id && focusedIndex === index ? 0 : -1} 
+              >
+                <span className="text-xs text-left w-full pl-1">
+                  {!cell.isTermLetter ? cell.number : '?'}
+                </span>
+                <span className={`text-xl h-7 letter-${cell.number} bg-none`}></span>
+                <input type="text" className="hidden" id="hiddenInput" />
+              </button>
+            ) : (
+              <span className="text-xs">-</span>
+            )}
+          </td>
+        ))}
+    </>
+  );
 }
