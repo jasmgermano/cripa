@@ -21,12 +21,9 @@ export default function useCripa() {
     const [isAllCorrect, setIsAllCorrect] = useState<boolean>(false);
     const [correctLetters, setCorrectLetters] = useState<{ [key: string]: boolean }>({});
     const [isMobile, setIsMobile] = useState<boolean>();
-
+    const [currentCuriosity, setCurrentCuriosity] = useState<{ text: string; link?: string } | null>(null);
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
-        console.log("fetchWordData");
-        console.log("isMobile", isMobile);
-
         if (isMobile) return;
 
         try {
@@ -401,7 +398,26 @@ export default function useCripa() {
             };
         }
     }, []);
+
+    useEffect(() => {
+        const curiosities = [
+            { text: "O escritor Edgar Allan Poe ajudou a popularizar os criptogramas no século XIX, publicando artigos em jornais e revistas" },
+            { text: "Você sabia que o termo 'criptograma' vem do grego 'kryptós' (oculto) e 'grámma' (letra)?" },
+            { text: "Resolver criptogramas ajuda a treinar a memória e o pensamento crítico, promovendo saúde cerebral" },
+            { text: "Dica: geralmente, as letras mais comuns em português são 'A', 'E', 'O', 'S' e 'R'" },
+            { text: "Jogos do tipo passatempo, como criptogramas, estimulam a criação de uma nova linha de raciocínio, provocando sinapses e causando neurogênese em várias áreas da cabeça." },
+            { text: "Você sabia? Jogos de palavra podem contribuir para a prevenção de doenças neurodegenerativas, como a doença de Alzheimer" },
+            { text: "Professores utilizam criptogramas para ensinar lógica, alfabetização e até mesmo história, quando as mensagens decifradas têm um contexto cultural ou histórico" },
+            { text: "O primeiro registro histórico de um criptograma foi encontrado em uma inscrição cuneiforme na antiga Mesopotâmia, datada de 1500 a.C." },
+            { text: 'Historicamente, criptogramas foram utilizados para proteger informações sensíveis. Um exemplo famoso é o "Zodiac Killer", que enviou quatro criptogramas à polícia nos anos 1960.' },
+            { text: "A desenvolvedora do Cripa tem um portfólio beeem legal! ★ Confira em ", link: "https://jasminegermano.vercel.app/" },
+            { text: "Pessoas que jogam o cripa frequentemente têm 100% mais chances de se tornarem mais inteligentes e bonitas. Faça o teste! 😜" },
+          ];          
+    
+        const randomCuriosity = curiosities[Math.floor(Math.random() * curiosities.length)];
+        setCurrentCuriosity(randomCuriosity);    
+      }, []);
     
 
-    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile };
+    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
 }
