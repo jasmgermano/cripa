@@ -7,9 +7,11 @@ import Image from "next/image";
 import Star from "@/assets/star.svg";
 import Button from "@/components/button";
 import Modal from "@/components/modal";
+import Menu from "@/components/menu";
+import Footer from "@/components/footer";
 
 export default function Home() {
-  const { solutions, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect } = useCripa();
+  const { solutions, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile } = useCripa();
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [focusedRow, setFocusedRow] = useState<number | null>(null);
@@ -56,8 +58,9 @@ export default function Home() {
   }, [handleKeyUp]);
 
   useEffect(() => {
-    generateAlphabetMap();
-  }, []);
+    if (!isMobile)
+      generateAlphabetMap();
+  }, [isMobile]);
 
   useEffect(() => {
     setShowSuccessModal(isAllCorrect);
@@ -95,20 +98,22 @@ export default function Home() {
     );
   }
 
+  if (isMobile) {
+    return (
+      <div className="h-screen flex flex-col">
+        <Menu toggleInstructions={toggleInstructions} />
+        <div className="lg:hidden h-full flex flex-col justify-center items-center px-4 gap-4">
+          <h1 className="text-4xl font-bold text-custom-gray">Ops! 😭</h1>
+          <p className="text-center text-lg font-semibold text-custom-gray leading-tight">Lamentamos! O cripa ainda não está disponível para dispositivos móveis. Acesse pelo computador para jogar!</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen lg:h-auto">
-      <menu className="relative h-10 bg-custom-green flex items-center justify-start">
-        <div className="absolute top-10 transform -translate-y-1/2 flex justify-center items-center h-11 w-full">
-          <Image src={Logo} alt="Logo" className="h-full" />
-        </div>
-        <ul className="hidden lg:flex justify-end text-center w-1/2 pr-20">
-          <li className="z-10">
-            <button className="text-custom-gray font-bold" onClick={toggleInstructions}>
-              Como Jogar
-            </button>
-          </li>
-        </ul>
-      </menu>
+      <Menu toggleInstructions={toggleInstructions} />
       <main className="hidden lg:flex px-3 lg:px-48 mt-16 flex-col gap-10 justify-center items-center mb-10">
         <div className="hint-bar py-10 text-center">
           <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>{termTip[0]?.clue}
@@ -182,14 +187,7 @@ export default function Home() {
           </Modal>
         )}
       </main>
-      <div className="lg:hidden h-full flex flex-col justify-center items-center px-4 gap-4">
-        <h1 className="text-4xl font-bold text-custom-gray">Ops! 😭</h1>
-        <p className="text-center text-lg font-semibold text-custom-gray leading-tight">Lamentamos! O cripa ainda não está disponível para dispositivos móveis. Acesse pelo computador para jogar!</p>
-      </div>
-      <footer className="w-full text-center flex flex-col gap-4">
-        <span className="hidden lg:block text-custom-gray font-bold">As dicas são geradas pelo gemini e podem não fazer sentido. Me avise se tiver algo errado!</span>
-        <span className="text-custom-gray w-full py-2 bg-custom-green"><a href="/" className="underline">Cripa</a> ★ Desenvolvido por <a href="https://www.linkedin.com/in/jasmgermano/" className="underline">Jasmine</a></span>
-      </footer>
+      <Footer />     
     </div>
   );
 }

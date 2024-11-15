@@ -16,7 +16,7 @@ export default function WordButton({
   focusedIndex,
   focusedRow,
   setFocus
-}: WordButtonProps) {
+}: Readonly<WordButtonProps>) {
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]); // Refs for buttons
 
   const handleWordSelection = (number: number, index: number) => {
@@ -27,6 +27,7 @@ export default function WordButton({
 
     currentActive.forEach((element) => {
       const btnActive = element.closest("td");
+
       if (btnActive) {
         btnActive.classList.remove("active");
       }
@@ -34,16 +35,10 @@ export default function WordButton({
 
     wordElements.forEach((element) => {
       const btnActive = element.closest("td");
+
       if (btnActive && !btnActive.classList.contains("active"))
         btnActive.classList.add("active");
     });
-
-    if (/Mobi|Android/i.test(navigator.userAgent)) {
-      const hiddenInput = document.getElementById('hiddenInput');
-      if (hiddenInput) {
-        hiddenInput.focus();
-      }
-    }
   };
 
   useEffect(() => {
@@ -61,7 +56,7 @@ export default function WordButton({
             key={index}
             className={`h-full border-2 border-custom-gray w-14 ${
               cell.isTermLetter ? 'bg-custom-green border-black' : ''
-            } ${focusedRow === id && focusedIndex === index ? 'active-cell' : ''}`}
+            }`}
             id={`td-${index}-row-${id}`}
           >
             {cell ? (

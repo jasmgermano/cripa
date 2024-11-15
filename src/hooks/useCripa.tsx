@@ -19,8 +19,16 @@ export default function useCripa() {
     const [termTip, setTermTip] = useState<{ clue: any }[]>([]);
     let uniqueIndexTerm = -1;
     const [isAllCorrect, setIsAllCorrect] = useState<boolean>(false);
+    const [correctLetters, setCorrectLetters] = useState<{ [key: string]: boolean }>({});
+    const [isMobile, setIsMobile] = useState<boolean>();
+
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
+        console.log("fetchWordData");
+        console.log("isMobile", isMobile);
+
+        if (isMobile) return;
+
         try {
             const response = await fetch("/api/fetchWordData", {
                 cache: 'no-store',
@@ -36,7 +44,7 @@ export default function useCripa() {
     };
 
     // Função para buscar as soluções
-    const getSolutions = async () => {
+    const getSolutions = async () => {        
         const term = await getTerm();
         const normalizedTerm = normalizeText(term ?? ""); // Normaliza o termo
         const termArray = normalizedTerm.split("").filter((char) => char.trim() !== "");
@@ -69,7 +77,7 @@ export default function useCripa() {
     
 
     // Função para buscar os termos
-    const fetchTerms = async () => {
+    const fetchTerms = async () => {       
         try {
             const response = await fetch(`https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/2abf2809836b2e48934bbe22d56515c627709730/termos.json`, {
                 cache: 'no-store',
@@ -101,8 +109,14 @@ export default function useCripa() {
 
     // Efeito para buscar os dados das palavras
     useEffect(() => {
-        fetchWordData();
-    }, []); // Apenas uma vez ao carregar
+        if (typeof isMobile === "boolean" && !isMobile) {
+            fetchWordData();
+        } else if (isMobile) {
+            setLoading(false);
+            return;
+        }
+    }, [isMobile]);
+    
 
     // Efeito para buscar as soluções quando as palavras forem carregadas
     useEffect(() => {
@@ -127,6 +141,11 @@ export default function useCripa() {
             let number = 0;
             const spanActive = element.querySelectorAll("span")[1];
             const classList = spanActive.classList;
+            const cellId = element.closest("td")?.getAttribute("data-id");
+
+            console.log("cellId", cellId);
+            // Impede alteração de letras corretas
+            if (cellId && correctLetters[cellId]) return;
 
             classList.forEach((className) => {
                 if (/^letter-\d+$/.test(className)) {
@@ -156,9 +175,6 @@ export default function useCripa() {
                 spanActive.textContent = eventKey.toUpperCase();
                 mapTrys[number] = eventKey;
                 setTrys(mapTrys);
-            } else if (event.key === 'ArrowUp') {
-                
-                console.log("ArrowUp");
             }
         });
     };
@@ -236,6 +252,7 @@ export default function useCripa() {
         let checkedIndexes: number[] = [];
         let termWithoutSpaces = term.replace(/\s/g, "");
         const activeElements = document.querySelectorAll(".active");
+        let newCorrectLetters = { ...correctLetters }; // Copia o estado atual
         let correct = true;
     
         // Remover a classe 'active' de todos os elementos
@@ -269,7 +286,7 @@ export default function useCripa() {
                         if (elementToCheck.textContent === letter.toUpperCase().trim()) {
                             tdActive.classList.add("bg-green-300");
                             checkedIndexes.push(indexInTerm);
-                
+                            newCorrectLetters[letter] = true;
                         } else {
                             tdActive.classList.add("bg-red-400");
                             correct = false;
@@ -299,6 +316,7 @@ export default function useCripa() {
             });            
         });
 
+        setCorrectLetters(newCorrectLetters);
         setIsAllCorrect(correct);
     };
 
@@ -332,7 +350,6 @@ export default function useCripa() {
 
     const handleGenerateTips = async () => {
         try {
-            setLoading(true);
             const apiKey = process.env.NEXT_PUBLIC_API_KEY;
 
             if (!apiKey) {
@@ -355,8 +372,6 @@ export default function useCripa() {
 
         } catch (error) {
             console.error(error);
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -364,5 +379,29 @@ export default function useCripa() {
         handleGenerateTips();
     }, [term]);
 
-    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect };
+    useEffect(() => {
+        if (solutions.length > 0 && term.length > 0 && soltionsTips.length > 0 && termTip.length > 0) {
+            setLoading(false);
+        }
+    }, [solutions, term, termTip, soltionsTips]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const updateIsMobile = () => {
+                const mobile = window.matchMedia("(max-width: 768px)").matches;
+                console.log("Resize detectado. Is mobile?", mobile);
+                setIsMobile(mobile);
+            };
+    
+            updateIsMobile();
+            window.addEventListener("resize", updateIsMobile);
+    
+            return () => {
+                window.removeEventListener("resize", updateIsMobile);
+            };
+        }
+    }, []);
+    
+
+    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile };
 }
