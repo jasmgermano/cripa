@@ -87,12 +87,12 @@ export default function Home() {
         <div className="h-full flex flex-col items-center justify-center animate-float gap-4">
           <Image src={Logo} alt="Imagem do logo com uma animação de flutuação" className="h-20" />
           {currentCuriosity && currentCuriosity.link ? (
-            <p className="text-lg font-semibold text-custom-gray leading-tight"> 
+            <p className="text-lg font-semibold text-custom-gray leading-tight w-3/4"> 
               {currentCuriosity.text} 
               <a href={currentCuriosity.link} target="_blank" rel="noreferrer" className="underline">{currentCuriosity.link}</a>
             </p>
           ) : (
-            <p className="text-lg font-semibold text-custom-gray leading-tight">{currentCuriosity?.text}</p>
+            <p className="text-lg font-semibold text-custom-gray leading-tight w-3/4">{currentCuriosity?.text}</p>
           )}
           <div role="status">
             <svg aria-hidden="true" className="w-8 h-8 text-gray-200 animate-spin dark:text-custom-gray fill-custom-beige" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
