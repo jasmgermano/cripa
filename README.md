@@ -31,6 +31,8 @@ O deploy do jogo está disponível em: [https://cripa.netlify.app/](https://crip
 ![npm](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![npm](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
+Para gerar as dicas, utilizei a inteligência artifical do google, o [gemini](https://ai.google.dev/gemini-api/docs?hl=pt-br).
+
 ## Funcionalidades ★
 - [x] Tela de loading
   
