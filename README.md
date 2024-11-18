@@ -17,6 +17,9 @@ O cripa é um jogo de criptograma desafiador e divertido, perfeito para treinar 
 
 Este jogo é perfeito para quem ama desafios de lógica, passatempos, como palavras cruzadas, ou quer testar sua habilidade de decifrar pistas de forma criativa.
 
+## Jogue! ★
+O deploy do jogo está disponível em: [https://cripa.netlify.app/](https://cripa.netlify.app/)
+
 ## 📷 Design e telas ★
 <img src="https://github.com/user-attachments/assets/49cc0784-30e4-4d0d-ad03-b8d2f3a2b6f7" alt="Tela de loading" width="800"/>
 <img src="https://github.com/user-attachments/assets/50c4348b-1e29-4f0d-95ba-23fdbb1d865a" alt="Tela do jogo" width="800"/>
