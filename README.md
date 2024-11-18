@@ -59,6 +59,9 @@ Além disso, será possível compartilhar os resultados diretamente em redes soc
       
   ★ Expandir para palavras e dicas em outros idiomas.
 - [ ] Botão para limpar jogo
+- [ ] Versão mobile
+
+  ★ Atualmente, o cripa não está disponível em dispositivos móveis. 
 
 
 ## ⚙ Instalação ★
