@@ -11,38 +11,38 @@ import Menu from "@/components/menu";
 import Footer from "@/components/footer";
 
 export default function Home() {
-  const { solutions, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa();
+  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa();
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [focusedRow, setFocusedRow] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const totalRows = solutions.length;
-  const totalColumns = 8; 
+  const totalColumns = 8;
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (focusedIndex === null || focusedRow === null) return; 
-  
+    if (focusedIndex === null || focusedRow === null) return;
+
     let newIndex = focusedIndex;
     let newRow = focusedRow;
 
     event.preventDefault();
-  
+
     if (event.key === 'ArrowRight') {
-      newIndex = (focusedIndex + 1) % totalColumns; 
+      newIndex = (focusedIndex + 1) % totalColumns;
     } else if (event.key === 'ArrowLeft') {
-      newIndex = (focusedIndex - 1 + totalColumns) % totalColumns; 
+      newIndex = (focusedIndex - 1 + totalColumns) % totalColumns;
     } else if (event.key === 'ArrowDown') {
-      newRow = focusedRow + 1 < totalRows ? focusedRow + 1 : focusedRow; 
+      newRow = focusedRow + 1 < totalRows ? focusedRow + 1 : focusedRow;
     } else if (event.key === 'ArrowUp') {
-      newRow = focusedRow > 0 ? focusedRow - 1 : focusedRow; 
+      newRow = focusedRow > 0 ? focusedRow - 1 : focusedRow;
     } else {
-      return; 
+      return;
     }
-  
+
     setFocusedRow(newRow);
     setFocusedIndex(newIndex);
   };
-  
+
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -81,18 +81,18 @@ export default function Home() {
     { number: '7', letter: 'O', bgClass: '' },
   ];
 
-  if (loading) {      
+  if (loading) {
     return (
       <div className="bg-custom-beige text-center p-10 h-screen w-full">
         <div className="h-full flex flex-col items-center justify-center animate-float gap-4">
-          <Image src={Logo} alt="Imagem do logo com uma animação de flutuação" className="h-20" />
+          <Image src={Logo} alt="Imagem do logo com uma animação de flutuação" className="h-14 sm:h-20" />
           {currentCuriosity && currentCuriosity.link ? (
-            <p className="text-lg font-semibold text-custom-gray leading-tight w-3/4"> 
-              {currentCuriosity.text} 
+            <p className="text-[10px] sm:text-md font-semibold text-custom-gray leading-tight w-3/4">
+              {currentCuriosity.text}
               <a href={currentCuriosity.link} target="_blank" rel="noreferrer" className="underline">{currentCuriosity.link}</a>
             </p>
           ) : (
-            <p className="text-lg font-semibold text-custom-gray leading-tight w-3/4">{currentCuriosity?.text}</p>
+            <p className="text-[10px] sm:text-md font-semibold text-custom-gray leading-tight w-3/4">{currentCuriosity?.text}</p>
           )}
           <div role="status">
             <svg aria-hidden="true" className="w-8 h-8 text-gray-200 animate-spin dark:text-custom-gray fill-custom-beige" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -106,51 +106,81 @@ export default function Home() {
     );
   }
 
-  if (isMobile) {
-    return (
-      <div className="h-screen flex flex-col">
-        <Menu toggleInstructions={toggleInstructions} />
-        <div className="lg:hidden h-full flex flex-col justify-center items-center px-4 gap-4">
-          <h1 className="text-4xl font-bold text-custom-gray">Ops! 😭</h1>
-          <p className="text-center text-lg font-semibold text-custom-gray leading-tight">Lamentamos! O cripa ainda não está disponível para dispositivos móveis. Acesse pelo computador para jogar!</p>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen lg:h-auto">
       <Menu toggleInstructions={toggleInstructions} />
-      <main className="hidden lg:flex px-3 lg:px-48 mt-16 flex-col gap-10 justify-center items-center mb-10">
-        <div className="hint-bar py-10 text-center">
-          <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>{termTip[0]?.clue}
+      <div className="sm:hidden flex justify-center mt-7">
+        <button className="text-custom-gray font-bold sm:hidden" onClick={toggleInstructions}>
+                  Como Jogar
+        </button>
+      </div>
+      <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48">
+        <div className="hint-bar py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
+          <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>
+          <span>{termTip[0]?.clue}</span>
         </div>
-        <table className="border-collapse border-2 border-custom-gray w-full bg-custom-beige shadow-custom">
-          <tbody className="relative">
-            {solutions.map((word, rowIndex) => (
-              <tr key={`row-${word}-${rowIndex}`} className={`row-${rowIndex}`}>
-                <td className="border-2 border-custom-gray p-3">
-                  {soltionsTips[rowIndex]?.clue}
-                </td>
-                <WordButton 
-                  key={`button-${word}-${rowIndex}`} 
-                  id={rowIndex} 
-                  solution={word} 
-                  crypto={resultArray[rowIndex]} 
-                  highlight={rowIndex} 
-                  focusedIndex={focusedIndex}
-                  focusedRow={focusedRow}
-                  setFocus={(newRow: number, newIndex: number) => {
-                    setFocusedRow(newRow);
-                    setFocusedIndex(newIndex);
-                  }}
-                />
-              </tr>
+
+        <div className="overflow-x-auto w-full">
+          <table className="min-w-[700px] border-collapse border-2 border-custom-gray w-full bg-custom-beige shadow-custom">
+            <tbody className="relative">
+              {solutions.map((word, rowIndex) => (
+                <tr key={`row-${word}-${rowIndex}`} className={`row-${rowIndex}`}>
+                  <td className="border-2 border-custom-gray p-3 text-sm sm:text-md">
+                    {soltionsTips[rowIndex]?.clue}
+                  </td>
+                  <WordButton
+                    key={`button-${word}-${rowIndex}`}
+                    id={rowIndex}
+                    solution={word}
+                    crypto={resultArray[rowIndex]}
+                    highlight={rowIndex}
+                    focusedIndex={focusedIndex}
+                    focusedRow={focusedRow}
+                    setFocus={(newRow: number, newIndex: number) => {
+                      setFocusedRow(newRow);
+                      setFocusedIndex(newIndex);
+                    }}
+                  />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {isMobile && (
+          <div className="flex flex-wrap justify-center gap-2 -mt-3 max-w-xs mx-auto">
+            {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+              <button
+                key={letter}
+                className="w-10 h-10 bg-custom-gray shadow-custom border-2 border-custom-gray text-white rounded font-bold"
+                onClick={() => {
+                  processLetterInput(letter);
+
+                  if (focusedRow !== null && focusedIndex !== null) {
+                    const nextIndex = (focusedIndex + 1) % totalColumns;
+                    const nextRow =
+                      nextIndex === 0 && focusedRow + 1 < solutions.length
+                        ? focusedRow + 1
+                        : focusedRow;
+
+                    setFocusedRow(nextRow);
+                    setFocusedIndex(nextIndex);
+                  }
+                }}
+              >
+                {letter}
+              </button>
             ))}
-          </tbody>
-        </table>
+            <button
+              className="w-20 h-10 bg-custom-green shadow-custom rounded font-bold border-2 border-custom-gray"
+              onClick={() => processLetterInput(null)}
+            >
+              Apagar
+            </button>
+          </div>
+        )}
+
         <Button text="Verificar" onClick={handleVerify} />
+
         {showSuccessModal && (
           <Modal isOpen={isAllCorrect} onClose={() => setIsAllCorrect(false)} color="custom-green">
             <div className="flex items-center gap-3 mb-5">
@@ -164,38 +194,38 @@ export default function Home() {
           </Modal>
         )}
         {isInstructionsOpen && (
-          <Modal isOpen={isInstructionsOpen} onClose={toggleInstructions} color="custom-green">             
-              <div className="flex items-center gap-3 mb-5">
-                <h2 className="text-xl font-bold">Como Jogar</h2>
-                <Image src={Star} alt="Fechar" className="h-5 w-5" />
-              </div>
-              <p>Cripa é um jogo do tipo criptograma, onde você deve decifrar palavras a partir de dicas e preencher as letras correspondentes.</p>
-              <ul className="list-disc pl-5 pb-4">
-                <li>Use as dicas para preencher as palavras na tabela.</li>
-                <li>As casas com o mesmo número representam a mesma letra.</li>
-                <table className="border-collapse border-2 border-custom-gray bg-custom-beige shadow-custom mt-4 w-3/5 mb-4">
-                  <tbody>
-                    <tr>
-                      {instructionsData.map((cell, index) => (
-                        <td key={index} className="h-full border-2 border-custom-gray w-10">
-                          <div className={`w-full h-full flex flex-col items-center pb-2 ${cell.bgClass}`}>
-                            <span className="text-xs text-left w-full pl-1">{cell.number}</span>
-                            <span className="text-xl h-7 bg-none">{cell.letter}</span>
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-                <li>As casas destacadas (em verde) formam uma palavra da vertical.</li>
-                <li>Não há diferenciação de letras com acentuação. Exemplo: "A" e "Á" são consideradas iguais.</li>
-                <li>Ao preencher todas as palavras, clique em "Verificar". Onde estiver errado, as casas ficarão vermelhas.</li>
-              </ul>
-              <Button text="Fechar" onClick={toggleInstructions} />
+          <Modal isOpen={isInstructionsOpen} onClose={toggleInstructions} color="custom-green">
+            <div className="flex items-center gap-3 mb-5">
+              <h2 className="text-xl font-bold">Como Jogar</h2>
+              <Image src={Star} alt="Fechar" className="h-5 w-5" />
+            </div>
+            <p>Cripa é um jogo do tipo criptograma, onde você deve decifrar palavras a partir de dicas e preencher as letras correspondentes.</p>
+            <ul className="list-disc pl-5 pb-4">
+              <li>Use as dicas para preencher as palavras na tabela.</li>
+              <li>As casas com o mesmo número representam a mesma letra.</li>
+              <table className="border-collapse border-2 border-custom-gray bg-custom-beige shadow-custom mt-4 w-[90%] sm:w-3/5 mb-4">
+                <tbody>
+                  <tr>
+                    {instructionsData.map((cell, index) => (
+                      <td key={index} className="h-full border-2 border-custom-gray w-10">
+                        <div className={`w-full h-full flex flex-col items-center pb-2 ${cell.bgClass}`}>
+                          <span className="text-xs text-left w-full pl-1">{cell.number}</span>
+                          <span className="text-sm sm:text-xl h-5 sm:h-7 bg-none">{cell.letter}</span>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+              <li>As casas destacadas (em verde) formam uma palavra da vertical.</li>
+              <li>Não há diferenciação de letras com acentuação. Exemplo: "A" e "Á" são consideradas iguais.</li>
+              <li>Ao preencher todas as palavras, clique em "Verificar". Onde estiver errado, as casas ficarão vermelhas.</li>
+            </ul>
+            <Button text="Fechar" onClick={toggleInstructions} />
           </Modal>
         )}
       </main>
-      <Footer />     
+      <Footer />
     </div>
   );
 }

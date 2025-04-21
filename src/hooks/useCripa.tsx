@@ -106,13 +106,8 @@ export default function useCripa() {
 
     // Efeito para buscar os dados das palavras
     useEffect(() => {
-        if (typeof isMobile === "boolean" && !isMobile) {
-            fetchWordData();
-        } else if (isMobile) {
-            setLoading(false);
-            return;
-        }
-    }, [isMobile]);
+        fetchWordData();
+    }, []);
     
 
     // Efeito para buscar as soluções quando as palavras forem carregadas
@@ -128,54 +123,59 @@ export default function useCripa() {
     };
 
 
-    // Função para manipular o evento de keyup
     const handleKeyUp = (event: KeyboardEvent) => {
+        const key = event.key.toLowerCase();
+      
+        if (key === "backspace" || key === "delete") {
+          processLetterInput(null);
+        } else if (/^[a-z]$/.test(key)) {
+          processLetterInput(key);
+        }
+      };
+
+      const processLetterInput = (letter: string | null) => {
         const activeElements = document.querySelectorAll(".active");
-        const eventKey = event.key.toLowerCase();
         let mapTrys = { ...Trys };
-
+        const normalizedLetter = letter ? normalizeText(letter.toLowerCase()) : null;
+      
         activeElements.forEach((element) => {
-            let number = 0;
-            const spanActive = element.querySelectorAll("span")[1];
-            const classList = spanActive.classList;
-            const cellId = element.closest("td")?.getAttribute("data-id");
-
-            console.log("cellId", cellId);
-            // Impede alteração de letras corretas
-            if (cellId && correctLetters[cellId]) return;
-
-            classList.forEach((className) => {
-                if (/^letter-\d+$/.test(className)) {
-                    number = parseInt(className.split("-")[1]);
-                }
-            });
-
-            if (event.key === 'Backspace' || event.key === 'Delete') {
-                spanActive.textContent = "";
-                delete mapTrys[number];
-            } else if (/^[A-Za-z]$/.test(eventKey)) {
-                let foundNumber: number | null = null;
-         
-                for (const [key, value] of Object.entries(mapTrys)) {
-                    if (value === normalizeText(eventKey) && parseInt(key) !== number && number !== 0) {
-                        foundNumber = parseInt(key);
-                        const foundElements = document.querySelectorAll(`.letter-${foundNumber}`);
-                        foundElements.forEach((el) => {
-                            el.textContent = "";
-                        });
-
-                        delete mapTrys[foundNumber];
-                    }
-                }
-
-                element.classList.remove("bg-red-300", "bg-red-400");
-                spanActive.textContent = eventKey.toUpperCase();
-                mapTrys[number] = eventKey;
-                setTrys(mapTrys);
+          let number = 0;
+          const spanActive = element.querySelectorAll("span")[1];
+          const classList = spanActive.classList;
+          const cellId = element.closest("td")?.getAttribute("data-id");
+      
+          // Impede alteração de letras corretas
+          if (cellId && correctLetters[cellId]) return;
+      
+          classList.forEach((className) => {
+            if (/^letter-\d+$/.test(className)) {
+              number = parseInt(className.split("-")[1]);
             }
+          });
+      
+          if (!normalizedLetter) {
+            spanActive.textContent = "";
+            delete mapTrys[number];
+          } else if (/^[a-z]$/.test(normalizedLetter)) {
+            // Remove letras duplicadas
+            for (const [key, value] of Object.entries(mapTrys)) {
+              if (value === normalizedLetter && parseInt(key) !== number && number !== 0) {
+                const foundElements = document.querySelectorAll(`.letter-${key}`);
+                foundElements.forEach((el) => (el.textContent = ""));
+                delete mapTrys[parseInt(key)];
+              }
+            }
+      
+            element.classList.remove("bg-red-300", "bg-red-400");
+            spanActive.textContent = normalizedLetter.toUpperCase();
+            mapTrys[number] = normalizedLetter;
+          }
         });
-    };
-
+      
+        setTrys(mapTrys);
+      };
+      
+      
     // Função para gerar o mapa do alfabeto
     const generateAlphabetMap = () => {
         const alphabet = ("abcdefghijklmnopqrstuvwxyz").split("");
@@ -419,5 +419,5 @@ export default function useCripa() {
       }, []);
     
 
-    return { data, solutions, handleKeyUp, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
+    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
 }
