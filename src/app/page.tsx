@@ -114,7 +114,7 @@ export default function Home() {
           Como Jogar
         </button>
       </div>
-      <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 pb-48 sm:pb-10">
+      <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 pb-[calc(env(safe-area-inset-bottom)+350px)] sm:pb-10">
         <div className="hint-bar py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
           <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>
           <span>{termTip[0]?.clue}</span>
@@ -150,7 +150,7 @@ export default function Home() {
           </table>
         </div>
         {isMobile && (
-          <div className="fixed bottom-0 left-0 w-full bg-custom-beige border-t-2 border-custom-gray z-50 sm:hidden">
+          <div className="fixed bottom-0 left-0 w-full bg-custom-beige border-t-2 border-custom-gray z-50 h-[320px] sm:hidden">
             <div className="flex flex-wrap justify-center gap-2 max-w-[500px] mx-auto p-3">
               {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
                 <button
@@ -181,7 +181,7 @@ export default function Home() {
                 Apagar
               </button>
             </div>
-            <Footer />
+            <Footer haveBgColor={false} />
           </div>
         )}
 
@@ -232,7 +232,7 @@ export default function Home() {
         )}
       </main>
       <div className="hidden sm:flex">
-        <Footer />
+        <Footer haveBgColor={true} />
       </div>
     </div>
   );
