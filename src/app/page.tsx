@@ -111,10 +111,10 @@ export default function Home() {
       <Menu toggleInstructions={toggleInstructions} />
       <div className="sm:hidden flex justify-center mt-7">
         <button className="text-custom-gray font-bold sm:hidden" onClick={toggleInstructions}>
-                  Como Jogar
+          Como Jogar
         </button>
       </div>
-      <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 scale-90 -mt-10 sm:mt-5 sm:scale-100">
+      <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 pb-48 sm:pb-10">
         <div className="hint-bar py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
           <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>
           <span>{termTip[0]?.clue}</span>
@@ -122,13 +122,13 @@ export default function Home() {
 
         <div className="overflow-x-auto w-full">
           <div className="sm:hidden flex justify-end mb-2">
-            <svg className="mr-5" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 14 14"><path fill="none" stroke="#4F4F46" strokeLinecap="round" strokeLinejoin="round" d="m13.478 11.832l-.46-2.757a2.573 2.573 0 0 0-2.961-2.114l-2.171.362l-.683-4.09a1.194 1.194 0 0 0-1.374-.98v0c-.65.108-1.09.723-.98 1.374l.894 5.36l-.363.133a1.715 1.715 0 0 0-.643 2.803l.184.19l.954.988M1.75.5L.5 1.75L1.75 3M.5 1.75h3M10.25.5l1.25 1.25L10.25 3m1.25-1.25h-3" strokeWidth="1"/></svg>
+            <svg className="mr-5" xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 14 14"><path fill="none" stroke="#4F4F46" strokeLinecap="round" strokeLinejoin="round" d="m13.478 11.832l-.46-2.757a2.573 2.573 0 0 0-2.961-2.114l-2.171.362l-.683-4.09a1.194 1.194 0 0 0-1.374-.98v0c-.65.108-1.09.723-.98 1.374l.894 5.36l-.363.133a1.715 1.715 0 0 0-.643 2.803l.184.19l.954.988M1.75.5L.5 1.75L1.75 3M.5 1.75h3M10.25.5l1.25 1.25L10.25 3m1.25-1.25h-3" strokeWidth="1" /></svg>
           </div>
-          <table className="w-full min-w-[700px] border-collapse border-2 border-custom-gray bg-custom-beige shadow-custom text-xs sm:text-sm">
+          <table className="min-w-[700px] border-collapse border-2 border-custom-gray w-full bg-custom-beige shadow-custom">
             <tbody className="relative">
               {solutions.map((word, rowIndex) => (
                 <tr key={`row-${word}-${rowIndex}`} className={`row-${rowIndex}`}>
-                  <td className="border-2 border-custom-gray p-2 text-[10px] sm:text-sm">
+                  <td className="border-2 border-custom-gray p-3 text-sm sm:text-md">
                     {soltionsTips[rowIndex]?.clue}
                   </td>
                   <WordButton
@@ -150,35 +150,38 @@ export default function Home() {
           </table>
         </div>
         {isMobile && (
-          <div className="flex flex-wrap justify-center gap-2 -mt-3 w-[80%] mx-auto">
-            {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+          <div className="fixed bottom-0 left-0 w-full bg-custom-beige border-t-2 border-custom-gray z-50 sm:hidden">
+            <div className="flex flex-wrap justify-center gap-2 max-w-[500px] mx-auto p-3">
+              {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+                <button
+                  key={letter}
+                  className="w-9 h-9 bg-custom-gray text-white rounded font-bold border-2 border-custom-gray"
+                  onClick={() => {
+                    processLetterInput(letter);
+
+                    if (focusedRow !== null && focusedIndex !== null) {
+                      const nextIndex = (focusedIndex + 1) % totalColumns;
+                      const nextRow =
+                        nextIndex === 0 && focusedRow + 1 < solutions.length
+                          ? focusedRow + 1
+                          : focusedRow;
+
+                      setFocusedRow(nextRow);
+                      setFocusedIndex(nextIndex);
+                    }
+                  }}
+                >
+                  {letter}
+                </button>
+              ))}
               <button
-                key={letter}
-                className="w-10 h-10 bg-custom-gray shadow-custom border-2 border-custom-gray text-white rounded font-bold"
-                onClick={() => {
-                  processLetterInput(letter);
-
-                  if (focusedRow !== null && focusedIndex !== null) {
-                    const nextIndex = (focusedIndex + 1) % totalColumns;
-                    const nextRow =
-                      nextIndex === 0 && focusedRow + 1 < solutions.length
-                        ? focusedRow + 1
-                        : focusedRow;
-
-                    setFocusedRow(nextRow);
-                    setFocusedIndex(nextIndex);
-                  }
-                }}
+                className="w-20 h-9 bg-custom-green text-white rounded font-bold border-2 border-custom-gray"
+                onClick={() => processLetterInput(null)}
               >
-                {letter}
+                Apagar
               </button>
-            ))}
-            <button
-              className="w-20 h-10 bg-custom-green shadow-custom rounded font-bold border-2 border-custom-gray"
-              onClick={() => processLetterInput(null)}
-            >
-              Apagar
-            </button>
+            </div>
+            <Footer />
           </div>
         )}
 
@@ -228,7 +231,9 @@ export default function Home() {
           </Modal>
         )}
       </main>
-      <Footer />
+      <div className="hidden sm:flex">
+        <Footer />
+      </div>
     </div>
   );
 }
