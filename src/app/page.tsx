@@ -150,7 +150,7 @@ export default function Home() {
           </table>
         </div>
         {isMobile && (
-          <div className="fixed bottom-0 left-0 w-full bg-custom-beige border-t-2 border-custom-gray z-50 h-[320px] sm:hidden">
+          <div className="fixed bottom-0 left-0 w-full bg-custom-beige border-t-2 border-custom-gray z-50 sm:hidden">
             <div className="flex flex-wrap justify-center gap-2 max-w-[500px] mx-auto p-3">
               {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
                 <button
