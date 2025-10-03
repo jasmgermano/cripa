@@ -20,7 +20,7 @@ export const generateTips = async (words: string[], apiKey: string) => {
       threshold: HarmBlockThreshold.BLOCK_NONE,
     },
   ];
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
   const prompt = `Gere exatamente uma dica no estilo de palavras cruzadas para cada uma das seguintes palavras: 
                   ${words.join(", ")}. 
