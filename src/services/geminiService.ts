@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
 
 export const generateTips = async (words: string[], apiKey: string) => {
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = new GoogleGenAI({ apiKey });
   const safetySettings = [
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
@@ -20,8 +20,6 @@ export const generateTips = async (words: string[], apiKey: string) => {
       threshold: HarmBlockThreshold.BLOCK_NONE,
     },
   ];
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
-
   const prompt = `Gere exatamente uma dica no estilo de palavras cruzadas para cada uma das seguintes palavras: 
                   ${words.join(", ")}. 
                   Para cada palavra, a dica deve ser criativa e sugerir o significado da palavra sem mencioná-la diretamente.
@@ -41,8 +39,12 @@ export const generateTips = async (words: string[], apiKey: string) => {
                   ["Dois que compartilham a vida e o amor.", "Espaço fortificado para abrigo e defesa."]`;
 
   try {
-    const result = await model.generateContent(prompt);
-    let content = result.response.candidates?.[0].content.parts[0].text || "";
+    const result = await genAI.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: { safetySettings },
+    });
+    let content = result.text || "";
 
     // Limpeza do conteúdo gerado
     content = content
