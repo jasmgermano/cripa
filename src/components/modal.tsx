@@ -9,9 +9,11 @@ export default function Modal({ children, isOpen, onClose, color }: modalProps) 
     return (
         <>
             {isOpen && (
-                <div className={`fixed inset-0 bg-${color} bg-opacity-50 flex items-center justify-center z-50 px-6`}>
-                    <div className="border-2 border-custom-gray bg-custom-beige shadow-custom p-6 rounded-lg relative max-w-[800px] mx-auto">
+                <div className={`fixed inset-0 bg-${color} bg-opacity-50 flex items-center justify-center z-50 px-4 py-6 sm:px-6`}>
+                    <div role="dialog" aria-modal="true" className="border-2 border-custom-gray bg-custom-beige shadow-custom p-6 rounded-lg relative w-full max-w-[800px] max-h-full overflow-y-auto mx-auto">
                         <button
+                            type="button"
+                            aria-label="Fechar"
                             className="absolute top-2 right-2"
                             onClick={onClose}
                         >
