@@ -148,8 +148,8 @@ export default function useCripa() {
           if (cellId && correctLetters[cellId]) return;
       
           classList.forEach((className) => {
-            if (/^letter-\d+$/.test(className)) {
-              number = parseInt(className.split("-")[1]);
+            if (/^letter--?\d+$/.test(className)) {
+              number = parseInt(className.replace("letter-", ""));
             }
           });
       
@@ -159,7 +159,7 @@ export default function useCripa() {
           } else if (/^[a-z]$/.test(normalizedLetter)) {
             // Remove letras duplicadas
             for (const [key, value] of Object.entries(mapTrys)) {
-              if (value === normalizedLetter && parseInt(key) !== number && number !== 0) {
+              if (value === normalizedLetter && parseInt(key) !== number && number > 0 && parseInt(key) > 0) {
                 const foundElements = document.querySelectorAll(`.letter-${key}`);
                 foundElements.forEach((el) => (el.textContent = ""));
                 delete mapTrys[parseInt(key)];
@@ -419,5 +419,10 @@ export default function useCripa() {
       }, []);
     
 
-    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
+    const termProgress = Array.from(
+        { length: solutions.length },
+        (_, index) => Trys[-(index + 1)]?.toUpperCase() ?? ""
+    );
+
+    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, termProgress, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
 }

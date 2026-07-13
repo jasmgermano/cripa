@@ -12,7 +12,7 @@ import Footer from "@/components/footer";
 import InstructionsModal from "@/components/instructionsModal";
 
 export default function Game() {
-  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa();
+  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, termProgress, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa();
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [focusedRow, setFocusedRow] = useState<number | null>(null);
@@ -105,9 +105,31 @@ export default function Game() {
         </button>
       </div>
       <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 lg:mt-5 pb-[calc(env(safe-area-inset-bottom)+350px)] sm:pb-10">
-        <div className="hint-bar py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
-          <span className="font-bold">Nos quadrados em destaque:&nbsp;</span>
-          <span>{termTip[0]?.clue}</span>
+        <div className="hint-bar flex flex-col">
+          <section className="w-full sm:px-4 sm:pt-3" aria-label="Progresso da palavra secreta">
+            <p className="mb-2 text-center text-xs font-bold uppercase tracking-[0.16em] sm:text-sm">
+              Palavra secreta
+            </p>
+            <div
+              className="mx-auto grid w-full max-w-lg gap-1 sm:gap-2"
+              style={{ gridTemplateColumns: `repeat(${termProgress.length}, minmax(0, 1fr))` }}
+            >
+              {termProgress.map((letter, index) => (
+                <span
+                  key={index}
+                  className={`flex h-6 min-w-0 items-center justify-center border-b-2 border-custom-gray text-[10px] font-bold sm:h-8 sm:text-sm ${letter ? "bg-custom-green" : ""}`}
+                  aria-label={`Letra ${index + 1}${letter ? `: ${letter}` : ": ainda não preenchida"}`}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <div className="py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
+            <span className="font-bold">Dica:&nbsp;</span>
+            <span>{termTip[0]?.clue}</span>
+          </div>
         </div>
 
         <div className="overflow-x-auto w-full">
