@@ -1,4 +1,4 @@
-import { getDatabase } from "@netlify/database";
+import { getStore } from "@netlify/blobs";
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -7,6 +7,7 @@ import { generateTips } from "@/services/geminiService";
 export const dynamic = "force-dynamic";
 
 const TERMS_URL = "https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/2abf2809836b2e48934bbe22d56515c627709730/termos.json";
+const DAILY_CHALLENGES_STORE = "daily-challenges";
 
 interface Tip {
   clue: string;
@@ -131,18 +132,18 @@ const generateChallenge = async (id: string): Promise<DailyChallenge> => {
 };
 
 const getStoredChallenge = async (id: string) => {
-  const db = getDatabase();
-  const rows = await db.sql`SELECT payload FROM daily_challenges WHERE challenge_date = ${id}`;
-  return rows[0]?.payload as DailyChallenge | undefined;
+  const store = getStore({ name: DAILY_CHALLENGES_STORE, consistency: "strong" });
+  return store.get(id, { type: "json" }) as Promise<DailyChallenge | null>;
 };
 
 const storeChallenge = async (id: string, challenge: DailyChallenge) => {
-  const db = getDatabase();
-  await db.sql`
-    INSERT INTO daily_challenges (challenge_date, payload)
-    VALUES (${id}, ${JSON.stringify(challenge)}::jsonb)
-    ON CONFLICT (challenge_date) DO NOTHING
-  `;
+  const store = getStore({ name: DAILY_CHALLENGES_STORE, consistency: "strong" });
+  const result = await store.setJSON(id, challenge, { onlyIfNew: true });
+
+  if (result.modified) {
+    return challenge;
+  }
+
   return getStoredChallenge(id);
 };
 
@@ -154,18 +155,16 @@ export async function GET() {
       return NextResponse.json(memoryCache.challenge, { headers: { "Cache-Control": "public, max-age=60, s-maxage=3600" } });
     }
 
-    let databaseAvailable = Boolean(process.env.NETLIFY_DB_URL || process.env.NETLIFY);
-    if (databaseAvailable) {
-      try {
-        const stored = await getStoredChallenge(id);
-        if (stored) {
-          memoryCache = { id, challenge: stored, expiresAt: Number.MAX_SAFE_INTEGER };
-          return NextResponse.json(stored, { headers: { "Cache-Control": "public, max-age=60, s-maxage=3600" } });
-        }
-      } catch (error) {
-        databaseAvailable = false;
-        console.warn("Banco diário indisponível; usando geração determinística.", error);
+    let blobsAvailable = true;
+    try {
+      const stored = await getStoredChallenge(id);
+      if (stored) {
+        memoryCache = { id, challenge: stored, expiresAt: Number.MAX_SAFE_INTEGER };
+        return NextResponse.json(stored, { headers: { "Cache-Control": "public, max-age=60, s-maxage=3600" } });
       }
+    } catch (error) {
+      blobsAvailable = false;
+      console.warn("Netlify Blobs indisponível; usando geração determinística.", error);
     }
 
     const generated = await generateChallenge(id);
@@ -173,7 +172,7 @@ export async function GET() {
       .some(({ clue }) => clue === "Dica temporariamente indisponível.");
     let challenge = generated;
 
-    if (databaseAvailable && !hasUnavailableTips) {
+    if (blobsAvailable && !hasUnavailableTips) {
       try {
         challenge = await storeChallenge(id, generated) ?? generated;
       } catch (error) {
