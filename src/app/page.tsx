@@ -20,7 +20,7 @@ export default function Home() {
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-custom-green text-custom-gray">
+    <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-custom-green text-custom-gray items-center">
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-5 py-8 sm:px-10 sm:py-10 lg:px-12">
 
         <section className="relative grid w-full overflow-hidden rounded-[2rem] border-2 border-custom-gray bg-custom-beige shadow-custom lg:grid-cols-2 lg:gap-10 lg:px-12">
@@ -51,20 +51,23 @@ export default function Home() {
               Cada número esconde uma letra. Use a lógica para completar as palavras e descobrir o desafio oculto.
             </p>
 
-            <div className="mt-8 flex w-full max-w-sm flex-col justify-center gap-3 sm:flex-row lg:max-w-none">
+            <div className="mt-8 flex w-full max-w-md flex-col justify-center gap-3">
+              <Link
+                href="/jogo?modo=diario"
+                className="group rounded-full border-2 border-custom-gray bg-custom-pink px-7 py-4 text-center shadow-custom transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-custom-gray"
+              >
+                <span className="flex items-center justify-center gap-2 font-black">
+                  <span aria-hidden="true">★</span>
+                  Desafio diário
+                  <span aria-hidden="true">★</span>
+                </span>
+              </Link>
               <Link
                 href="/jogo"
-                className="rounded-full border-2 border-custom-gray bg-custom-pink px-7 py-3 text-center font-bold shadow-custom transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-custom-gray"
+                className="flex-1 rounded-full border-2 border-custom-gray bg-custom-green px-6 py-3 text-center font-bold shadow-custom transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-custom-gray"
               >
                 Novo desafio
               </Link>
-              <button
-                type="button"
-                className="rounded-full border-2 border-custom-gray bg-custom-beige px-7 py-3 font-bold shadow-custom transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-custom-gray"
-                onClick={() => setInstructionsOpen(true)}
-              >
-                Como jogar
-              </button>
             </div>
           </div>
 
@@ -94,7 +97,15 @@ export default function Home() {
             </div>
           </div>
         </section>
+
       </main>
+      <button
+        type="button"
+        className="w-auto mb-2 rounded-full border-2 border-custom-gray bg-custom-beige px-6 py-3 font-bold shadow-custom transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-custom-gray"
+        onClick={() => setInstructionsOpen(true)}
+      >
+        Como jogar
+      </button>
       <Footer haveBgColor={true} showTipsWarning={false} />
 
       <InstructionsModal

@@ -11,12 +11,26 @@ import Menu from "@/components/menu";
 import Footer from "@/components/footer";
 import InstructionsModal from "@/components/instructionsModal";
 
-export default function Game() {
-  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, termProgress, loading, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa();
+interface GameProps {
+  searchParams?: { modo?: string };
+}
+
+const formatTime = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = hours > 0 ? [hours, minutes, seconds] : [minutes, seconds];
+  return parts.map((part) => String(part).padStart(2, "0")).join(":");
+};
+
+export default function Game({ searchParams }: GameProps) {
+  const isDaily = searchParams?.modo === "diario";
+  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, termProgress, loading, loadError, dailyId, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa(isDaily ? "daily" : "random");
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [focusedRow, setFocusedRow] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const totalRows = solutions.length;
   const totalColumns = 8;
 
@@ -59,9 +73,29 @@ export default function Game() {
   }, [handleKeyUp]);
 
   useEffect(() => {
-    if (!isMobile)
+    if (!isDaily && !isMobile)
       generateAlphabetMap();
-  }, [isMobile]);
+  }, [isMobile, isDaily]);
+
+  useEffect(() => {
+    if (!isDaily || loading || !dailyId) return;
+
+    const storageKey = `cripa-daily-start-${dailyId}`;
+    const storedStart = Number(window.localStorage.getItem(storageKey));
+    const start = Number.isFinite(storedStart) && storedStart > 0 ? storedStart : Date.now();
+
+    if (!storedStart) {
+      window.localStorage.setItem(storageKey, String(start));
+    }
+
+    const updateTimer = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - start) / 1000)));
+    updateTimer();
+
+    if (isAllCorrect) return;
+
+    const interval = window.setInterval(updateTimer, 1000);
+    return () => window.clearInterval(interval);
+  }, [isDaily, loading, dailyId, isAllCorrect]);
 
   useEffect(() => {
     setShowSuccessModal(isAllCorrect);
@@ -70,6 +104,15 @@ export default function Game() {
   const toggleInstructions = () => {
     setInstructionsOpen(!isInstructionsOpen);
   };
+
+  if (loadError) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-5 bg-custom-beige px-6 text-center text-custom-gray">
+        <p className="max-w-md text-lg font-bold">{loadError}</p>
+        <Button text="Voltar para o início" onClick={() => window.location.href = "/"} />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -105,6 +148,15 @@ export default function Game() {
         </button>
       </div>
       <main className="flex flex-col items-center gap-10 px-3 py-6 sm:px-10 md:px-20 lg:px-48 lg:mt-5 pb-[calc(env(safe-area-inset-bottom)+350px)] sm:pb-10">
+        {isDaily && (
+          <div className="flex items-center gap-3 rounded-full border-2 border-custom-gray bg-custom-pink px-5 py-2 font-bold shadow-custom">
+            <span>Desafio diário</span>
+            <span aria-hidden="true">★</span>
+            <time aria-label={`Tempo de jogo: ${formatTime(elapsedSeconds)}`} className="tabular-nums">
+              {formatTime(elapsedSeconds)}
+            </time>
+          </div>
+        )}
         <div className="hint-bar flex flex-col">
           <section className="w-full sm:px-4 sm:pt-3" aria-label="Progresso da palavra secreta">
             <p className="mb-2 text-center text-xs font-bold uppercase tracking-[0.16em] sm:text-sm">
@@ -206,8 +258,18 @@ export default function Game() {
               <Image src={Star} alt="Estrela" className="h-5 w-5" />
             </div>
             <p className="text-xl">🎉​ Divou! Você acertou todas as palavras! 🎉​</p>
+            {isDaily && (
+              <div className="mt-4 rounded-xl border-2 border-custom-gray bg-custom-pink px-5 py-3 text-center shadow-custom">
+                <p className="text-sm font-bold uppercase tracking-wider">Seu tempo</p>
+                <p className="mt-1 text-3xl font-black tabular-nums">{formatTime(elapsedSeconds)}</p>
+              </div>
+            )}
             <div className="w-full flex justify-center mt-4">
-              <Button text="Carregar novo jogo" color="custom-pink" onClick={() => window.location.reload()} />
+              <Button
+                text={isDaily ? "Voltar para o início" : "Carregar novo jogo"}
+                color="custom-pink"
+                onClick={() => isDaily ? window.location.href = "/" : window.location.reload()}
+              />
             </div>
           </Modal>
         )}

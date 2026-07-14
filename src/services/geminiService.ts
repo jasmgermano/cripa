@@ -1,6 +1,11 @@
 import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
 
-export const generateTips = async (words: string[], apiKey: string) => {
+interface GenerateTipsOptions {
+  seed?: number;
+  temperature?: number;
+}
+
+export const generateTips = async (words: string[], apiKey: string, options: GenerateTipsOptions = {}) => {
   const genAI = new GoogleGenAI({ apiKey });
   const safetySettings = [
     {
@@ -42,7 +47,11 @@ export const generateTips = async (words: string[], apiKey: string) => {
     const result = await genAI.models.generateContent({
       model: "gemini-3.5-flash",
       contents: prompt,
-      config: { safetySettings },
+      config: {
+        safetySettings,
+        seed: options.seed,
+        temperature: options.temperature,
+      },
     });
     let content = result.text || "";
 
@@ -57,7 +66,7 @@ export const generateTips = async (words: string[], apiKey: string) => {
       content = arrayMatch[0];
     } else {
       console.warn("Array JSON não encontrado no conteúdo gerado.");
-      return words.map((word) => ({ clue: `Dica não disponível para "${word}".` }));
+      return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
     }
     
     // Analisar o array JSON
@@ -66,19 +75,19 @@ export const generateTips = async (words: string[], apiKey: string) => {
       tips = JSON.parse(content);
     } catch (parseError) {
       console.error("Erro ao analisar dicas como JSON:", parseError);
-      return words.map((word) => ({ clue: `Dica não disponível para "${word}".` }));
+      return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
     }
 
     // Verificar se o resultado é um array válido e contém exatamente a quantidade esperada de dicas
     if (!Array.isArray(tips) || tips.length !== words.length) {
       console.warn("A quantidade de dicas geradas não corresponde à quantidade de palavras fornecidas.");
-      return words.map((word, index) => ({ clue: tips[index] || `Dica não disponível para "${word}".` }));
+      return words.map((_, index) => ({ clue: tips[index] || "Dica temporariamente indisponível." }));
     }
 
     // Mapear as dicas para o formato desejado
     return tips.map((tip) => ({ clue: tip }));
   } catch (error) {
     console.error("Erro ao gerar dicas:", error);
-    return words.map((word) => ({ clue: `Dica não disponível para "${word}".` }));
+    return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
   }
 };

@@ -7,7 +7,18 @@ interface WordData {
     words: string[];
 }
 
-export default function useCripa() {
+type GameMode = "random" | "daily";
+
+interface DailyChallengeData {
+    id: string;
+    term: string;
+    solutions: string[];
+    alphabetMap: { [key: string]: number };
+    solutionsTips: { clue: string }[];
+    termTip: { clue: string }[];
+}
+
+export default function useCripa(mode: GameMode = "random") {
     const [data, setData] = useState<WordData>({ words: [] });
     const [solutions, setSolutions] = useState<string[]>([]);
     const [alphabetMap, setAlphabetMap] = useState<{ [key: string]: number }>({});
@@ -22,11 +33,27 @@ export default function useCripa() {
     const [correctLetters, setCorrectLetters] = useState<{ [key: string]: boolean }>({});
     const [isMobile, setIsMobile] = useState<boolean>();
     const [currentCuriosity, setCurrentCuriosity] = useState<{ text: string; link?: string } | null>(null);
+    const [dailyId, setDailyId] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
-        if (isMobile) return;
-
         try {
+            if (mode === "daily") {
+                const response = await fetch("/api/dailyChallenge", { cache: "no-store" });
+                if (!response.ok) {
+                    throw new Error("Erro ao buscar o desafio diário");
+                }
+
+                const challenge = await response.json() as DailyChallengeData;
+                setDailyId(challenge.id);
+                setTerm(normalizeText(challenge.term));
+                setSolutions(challenge.solutions);
+                setAlphabetMap(challenge.alphabetMap);
+                setSolutionsTips(challenge.solutionsTips);
+                setTermTip(challenge.termTip);
+                return;
+            }
+
             const response = await fetch("/api/fetchWordData", {
                 cache: 'no-store',
               });
@@ -37,6 +64,9 @@ export default function useCripa() {
             setData(result);
         } catch (error) {
             console.error(error);
+            setLoadError(mode === "daily"
+                ? "Não foi possível carregar o desafio diário. Tente novamente em instantes."
+                : "Não foi possível carregar o jogo. Tente novamente.");
         }
     };
 
@@ -107,15 +137,15 @@ export default function useCripa() {
     // Efeito para buscar os dados das palavras
     useEffect(() => {
         fetchWordData();
-    }, []);
+    }, [mode]);
     
 
     // Efeito para buscar as soluções quando as palavras forem carregadas
     useEffect(() => {
-        if (data.words.length > 0 && solutions.length === 0) {
+        if (mode === "random" && data.words.length > 0 && solutions.length === 0) {
             getSolutions();
         }
-    }, [data]);
+    }, [data, mode]);
 
     // Função para remover acentos e caracteres especiais
     const normalizeText = (text: string) => {
@@ -373,8 +403,10 @@ export default function useCripa() {
     }
 
     useEffect(() => {
-        handleGenerateTips();
-    }, [term]);
+        if (mode === "random") {
+            handleGenerateTips();
+        }
+    }, [term, mode]);
 
     useEffect(() => {
         if (solutions.length > 0 && term.length > 0 && soltionsTips.length > 0 && termTip.length > 0) {
@@ -424,5 +456,5 @@ export default function useCripa() {
         (_, index) => Trys[-(index + 1)]?.toUpperCase() ?? ""
     );
 
-    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, termProgress, loading, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
+    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, termProgress, loading, loadError, dailyId, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
 }
