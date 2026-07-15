@@ -4560,8 +4560,42 @@ ZIRCONIO
 ZODIACAL
 ZOMBARIA
 ZOOLOGIA
-GAL COSTA
-LADY GAGA
-GREEN DAY
-O REI LEAO
-TOY STORY
+GAL COSTA|cantora|Brasil
+LADY GAGA|cantora|Estados Unidos
+GREEN DAY|banda|Estados Unidos
+O REI LEAO|filme|1994
+TOY STORY|filme|1995
+ESPRESSO|música|Sabrina Carpenter
+OBSESSED|música|Olivia Rodrigo
+NONSENSE|música|Sabrina Carpenter
+SUPERCUT|música|Lorde
+DOMINOES|música|Lorde
+NEW RULES|música|Dua Lipa
+PHYSICAL|música|Dua Lipa
+DELICATE|música|Taylor Swift
+DAYLIGHT|música|Taylor Swift
+CARDIGAN|música|Taylor Swift
+ANTI HERO|música|Taylor Swift
+FIREWORK|música|Katy Perry
+DYNAMITE|música|BTS
+CORALINE|filme|Henry Selick
+PARASITE|filme|Bong Joon-ho
+WHIPLASH|filme|Damien Chazelle
+SCARFACE|filme|Brian De Palma
+TWILIGHT|filme|2008
+CLUELESS|filme|Amy Heckerling
+DEADPOOL|filme|Tim Miller
+LADY BIRD|filme|Greta Gerwig
+GAL GADOT|atriz|Israel
+TOM HANKS|ator|Estados Unidos
+BRAD PITT|ator|Estados Unidos
+AL PACINO|ator|Estados Unidos
+ED HARRIS|ator|Estados Unidos
+SEAN PENN|ator|Estados Unidos
+NEYMAR JR|jogador|futebol
+COLDPLAY|banda|Reino Unido
+PARAMORE|banda|Estados Unidos
+GORILLAZ|banda|Reino Unido
+THE CLASH|banda|Reino Unido
+DAFT PUNK|dupla musical|França
+INTERPOL|banda|Estados Unidos

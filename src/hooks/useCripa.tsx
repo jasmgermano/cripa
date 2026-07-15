@@ -1,10 +1,12 @@
 import { generateTips } from '@/services/geminiService';
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
+import { parseWordEntries, type WordEntry } from '@/utils/wordEntries';
 
 
 interface WordData {
     words: string[];
+    entries?: WordEntry[];
 }
 
 type GameMode = "random" | "daily";
@@ -21,10 +23,12 @@ interface DailyChallengeData {
 export default function useCripa(mode: GameMode = "random") {
     const [data, setData] = useState<WordData>({ words: [] });
     const [solutions, setSolutions] = useState<string[]>([]);
+    const [solutionEntries, setSolutionEntries] = useState<WordEntry[]>([]);
     const [alphabetMap, setAlphabetMap] = useState<{ [key: string]: number }>({});
     const [resultArray, setResultArray] = useState<{ number: number, isTermLetter: boolean }[][]>([]);
     const [Trys, setTrys] = useState<{ [key: number]: string }>({});
     const [term, setTerm] = useState<string>("");
+    const [termEntry, setTermEntry] = useState<WordEntry | null>(null);
     const [loading, setLoading] = useState<boolean>(true);  // Estado de loading
     const [soltionsTips, setSolutionsTips] = useState<{ clue: any }[]>([]);
     const [termTip, setTermTip] = useState<{ clue: any }[]>([]);
@@ -100,25 +104,28 @@ export default function useCripa(mode: GameMode = "random") {
 
     // Função para buscar as soluções
     const getSolutions = async () => {        
-        const term = await getTerm();
-        const normalizedTerm = normalizeText(term ?? ""); // Normaliza o termo
+        const selectedTerm = await getTerm();
+        const normalizedTerm = normalizeText(selectedTerm?.word ?? ""); // Normaliza o termo
         const termArray = normalizedTerm.split("").filter((char) => char.trim() !== "");
-        let solutions: string[] = [];
-        let availableWords = [...data.words];
+        let selectedSolutions: WordEntry[] = [];
+        let availableWords = data.entries?.length
+            ? [...data.entries]
+            : data.words.map((word) => ({ word }));
 
         if (data.words.length > 0) {
-            while (solutions.length < 14 && availableWords.length > 0) {
+            while (selectedSolutions.length < 14 && availableWords.length > 0) {
                 termArray.forEach((letter: string) => {
                     let found = false;
                     while (!found) {
                         const index = Math.floor(Math.random() * availableWords.length);
-                        const word = availableWords[index];
+                        const selectedEntry = availableWords[index];
+                        const word = selectedEntry.word;
                         const normalizedWord = normalizeText(word); 
                         const letterIndex = normalizedWord.toLowerCase().indexOf(letter.toLowerCase());
 
                         if (letterIndex !== -1) { 
                             availableWords.splice(index, 1);
-                            solutions.push(word);
+                            selectedSolutions.push(selectedEntry);
                             found = true;
                         }
                     }
@@ -126,7 +133,9 @@ export default function useCripa(mode: GameMode = "random") {
             }
         }
 
-        setSolutions(solutions);
+        setSolutions(selectedSolutions.map((solution) => solution.word));
+        setSolutionEntries(selectedSolutions);
+        setTermEntry(selectedTerm ?? null);
         setTerm(normalizedTerm);
     };
     
@@ -134,7 +143,7 @@ export default function useCripa(mode: GameMode = "random") {
     // Função para buscar os termos
     const fetchTerms = async () => {       
         try {
-            const response = await fetch(`https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/2abf2809836b2e48934bbe22d56515c627709730/termos.json`, {
+            const response = await fetch(`https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/a4415d72fbb223d41bb9af8efd2e6c3acc973da1/termos.json`, {
                 cache: 'no-store',
             });
 
@@ -151,14 +160,14 @@ export default function useCripa(mode: GameMode = "random") {
     // Função para pegar um termo de 14 letras
     const getTerm = async () => {
         const terms = await fetchTerms();
-        const terms14letters = terms?.termos.filter((term: string) => {
-            const lettersOnly = term.match(/[a-zA-ZÀ-ÿ]/g);
+        const terms14letters = parseWordEntries(terms?.termos).filter((term) => {
+            const lettersOnly = term.word.match(/[a-zA-ZÀ-ÿ]/g);
             return lettersOnly && lettersOnly.length === 14;
         });
 
         if (terms14letters.length > 0) {
             const randomIndex = Math.floor(Math.random() * terms14letters.length);
-            return normalizeText(terms14letters[randomIndex]);
+            return terms14letters[randomIndex];
         }
     };
 
@@ -174,6 +183,23 @@ export default function useCripa(mode: GameMode = "random") {
             getSolutions();
         }
     }, [data, mode]);
+
+    useEffect(() => {
+        if (process.env.NODE_ENV !== "development" || solutions.length !== 14 || !term) return;
+
+        const selectedEntries = solutions.map((word, index) => solutionEntries[index] ?? { word });
+        const secretEntry = termEntry ?? { word: term };
+
+        console.log(`[Cripa] 14 palavras e palavra secreta do modo ${mode}:`);
+        console.table(
+            [...selectedEntries, secretEntry].map(({ word, category, context }, index) => ({
+                tipo: index === selectedEntries.length ? "PALAVRONA" : `palavra ${index + 1}`,
+                palavra: word,
+                categoria: category ?? "palavra comum",
+                contexto: context ?? "",
+            }))
+        );
+    }, [solutions, solutionEntries, term, termEntry, mode]);
 
     useEffect(() => {
         if (mode !== "daily" || !dailyId || !dailyGuessesReady) return;
@@ -417,13 +443,13 @@ export default function useCripa(mode: GameMode = "random") {
             }
 
             if (solutions.length !== 0) {
-                const tipsforSolutions = await generateTips(solutions, apiKey);
+                const tipSubjects = solutionEntries.length === solutions.length ? solutionEntries : solutions;
+                const tipsforSolutions = await generateTips(tipSubjects, apiKey);
                 setSolutionsTips(tipsforSolutions);
             }
 
             if (term) {
-                const termArray = new Array(1).fill(0);
-                termArray[0] = term;
+                const termArray = [termEntry ?? { word: term }];
     
                 const tipForTerm = await generateTips(termArray, apiKey);
                 setTermTip(tipForTerm);

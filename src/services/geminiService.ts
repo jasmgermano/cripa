@@ -1,12 +1,24 @@
 import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
+import type { WordEntry } from "@/utils/wordEntries";
 
 interface GenerateTipsOptions {
   seed?: number;
   temperature?: number;
 }
 
-export const generateTips = async (words: string[], apiKey: string, options: GenerateTipsOptions = {}) => {
+type TipSubject = string | WordEntry;
+
+export const generateTips = async (words: TipSubject[], apiKey: string, options: GenerateTipsOptions = {}) => {
   const genAI = new GoogleGenAI({ apiKey });
+  const subjects = words.map((subject) => typeof subject === "string" ? { word: subject } : subject);
+  const describedSubjects = subjects.map((subject, index) => {
+    const details = [
+      `termo: ${subject.word}`,
+      subject.category ? `categoria: ${subject.category}` : null,
+      subject.context ? `contexto: ${subject.context}` : null,
+    ].filter(Boolean).join("; ");
+    return `${index + 1}. ${details}`;
+  }).join("\n");
   const safetySettings = [
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
@@ -25,15 +37,16 @@ export const generateTips = async (words: string[], apiKey: string, options: Gen
       threshold: HarmBlockThreshold.BLOCK_NONE,
     },
   ];
-  const prompt = `Gere exatamente uma dica no estilo de palavras cruzadas para cada uma das seguintes palavras: 
-                  ${words.join(", ")}. 
-                  Para cada palavra, a dica deve ser criativa e sugerir o significado da palavra sem mencioná-la diretamente.
-                  Se a palavra tiver múltiplos significados, escolha o mais comum. A dica deve ser concisa, informativa e adequada ao contexto. 
-                  Evite prefixos como "Dica:" e evite usar asteriscos, aspas ou qualquer formatação adicional.
-                  A dica deve estar relacionada ao significado geral da palavra, sinônimos ou frases relacionadas.
+  const prompt = `Gere exatamente uma dica no estilo de palavras cruzadas para cada um dos seguintes termos, preservando a ordem:
+                  ${describedSubjects}
 
-                  Atenção: algumas palavras podem ser nomes de filmes, livros, músicas ou celebridades, então as dicas devem refletir essa possibilidade quando apropriado.
-                  Se for um filme, por exemplo, indique que é um filme. Se for um livro, indique que é um livro. Se for uma música, indique que é uma música.
+                  Para cada palavra, a dica deve ser criativa e sugerir o significado da palavra sem mencioná-la diretamente.
+                  Quando uma categoria ou um contexto forem fornecidos, eles são obrigatórios e devem determinar o sentido da dica.
+                  Não troque uma obra, pessoa ou personagem pelo significado literal das palavras do título ou do nome.
+                  Somente quando não houver categoria nem contexto, escolha o significado mais comum.
+                  A dica deve ser concisa, informativa e adequada ao contexto.
+                  Evite prefixos como "Dica:" e evite usar asteriscos, aspas ou qualquer formatação adicional.
+                  Se a categoria indicar filme, livro, música, série, pessoa, celebridade ou personagem, deixe essa natureza clara na dica.
 
                   Exemplos:
                   - Se a palavra for um verbo como "desistir", use algo como "abrir mão de algo planejado".
@@ -66,7 +79,7 @@ export const generateTips = async (words: string[], apiKey: string, options: Gen
       content = arrayMatch[0];
     } else {
       console.warn("Array JSON não encontrado no conteúdo gerado.");
-      return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
+      return subjects.map(() => ({ clue: "Dica temporariamente indisponível." }));
     }
     
     // Analisar o array JSON
@@ -75,19 +88,19 @@ export const generateTips = async (words: string[], apiKey: string, options: Gen
       tips = JSON.parse(content);
     } catch (parseError) {
       console.error("Erro ao analisar dicas como JSON:", parseError);
-      return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
+      return subjects.map(() => ({ clue: "Dica temporariamente indisponível." }));
     }
 
     // Verificar se o resultado é um array válido e contém exatamente a quantidade esperada de dicas
-    if (!Array.isArray(tips) || tips.length !== words.length) {
+    if (!Array.isArray(tips) || tips.length !== subjects.length) {
       console.warn("A quantidade de dicas geradas não corresponde à quantidade de palavras fornecidas.");
-      return words.map((_, index) => ({ clue: tips[index] || "Dica temporariamente indisponível." }));
+      return subjects.map((_, index) => ({ clue: tips[index] || "Dica temporariamente indisponível." }));
     }
 
     // Mapear as dicas para o formato desejado
     return tips.map((tip) => ({ clue: tip }));
   } catch (error) {
     console.error("Erro ao gerar dicas:", error);
-    return words.map(() => ({ clue: "Dica temporariamente indisponível." }));
+    return subjects.map(() => ({ clue: "Dica temporariamente indisponível." }));
   }
 };

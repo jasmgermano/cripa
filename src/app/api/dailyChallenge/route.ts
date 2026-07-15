@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { generateTips } from "@/services/geminiService";
+import { parseWordEntries, parseWordLine, type WordEntry } from "@/utils/wordEntries";
 
 export const dynamic = "force-dynamic";
 
-const TERMS_URL = "https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/2abf2809836b2e48934bbe22d56515c627709730/termos.json";
+const TERMS_URL = "https://gist.githubusercontent.com/jasmgermano/af07dc866dd7debd99448a0d887f86e5/raw/a4415d72fbb223d41bb9af8efd2e6c3acc973da1/termos.json";
 const DAILY_CHALLENGES_STORE = "daily-challenges";
+const DAILY_CHALLENGE_VERSION = "2";
 
 interface Tip {
   clue: string;
@@ -86,11 +88,11 @@ const generateChallenge = async (id: string): Promise<DailyChallenge> => {
 
   const words = wordsContent
     .split("\n")
-    .map((word) => word.trim())
-    .filter((word) => normalizeText(word).replace(/\s+/g, "").length === 8);
-  const termsData = await termsResponse.json() as { termos: string[] };
-  const terms = termsData.termos.filter((term) => {
-    const letters = normalizeText(term).match(/[a-zA-Z]/g);
+    .map(parseWordLine)
+    .filter((entry): entry is WordEntry => entry !== null && normalizeText(entry.word).replace(/\s+/g, "").length === 8);
+  const termsData = await termsResponse.json() as { termos?: unknown };
+  const terms = parseWordEntries(termsData.termos).filter((term) => {
+    const letters = normalizeText(term.word).match(/[a-zA-Z]/g);
     return letters?.length === 14;
   });
 
@@ -98,13 +100,14 @@ const generateChallenge = async (id: string): Promise<DailyChallenge> => {
     throw new Error("Nenhuma palavra secreta disponível para o desafio diário.");
   }
 
-  const term = normalizeText(terms[Math.floor(random() * terms.length)]);
+  const selectedTerm = terms[Math.floor(random() * terms.length)];
+  const term = normalizeText(selectedTerm.word);
   const termLetters = term.replace(/\s/g, "").toLowerCase().split("");
   const availableWords = [...words];
-  const solutions = termLetters.map((letter) => {
+  const selectedSolutions = termLetters.map((letter) => {
     const candidates = availableWords
-      .map((word, index) => ({ word, index }))
-      .filter(({ word }) => normalizeText(word).toLowerCase().includes(letter));
+      .map((entry, index) => ({ entry, index }))
+      .filter(({ entry }) => normalizeText(entry.word).toLowerCase().includes(letter));
 
     if (candidates.length === 0) {
       throw new Error(`Não foi encontrada uma palavra para a letra ${letter}.`);
@@ -112,13 +115,26 @@ const generateChallenge = async (id: string): Promise<DailyChallenge> => {
 
     const selected = candidates[Math.floor(random() * candidates.length)];
     availableWords.splice(selected.index, 1);
-    return selected.word;
+    return selected.entry;
   });
+  const solutions = selectedSolutions.map((solution) => solution.word);
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[Cripa] Palavras tratadas no desafio diário ${id}:`);
+    console.table(
+      [...selectedSolutions, selectedTerm].map(({ word, category, context }, index) => ({
+        tipo: index === selectedSolutions.length ? "palavra secreta" : "palavra de 8 letras",
+        palavra: word,
+        categoria: category ?? "palavra comum",
+        contexto: context ?? "",
+      }))
+    );
+  }
 
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.NEXT_PUBLIC_API_KEY;
   const unavailableTips = [...solutions, term].map(() => ({ clue: "Dica temporariamente indisponível." }));
   const tips = apiKey
-    ? await generateTips([...solutions, term], apiKey, { seed: seed & 0x7fffffff, temperature: 0 })
+    ? await generateTips([...selectedSolutions, selectedTerm], apiKey, { seed: seed & 0x7fffffff, temperature: 0 })
     : unavailableTips;
 
   return {
@@ -133,12 +149,12 @@ const generateChallenge = async (id: string): Promise<DailyChallenge> => {
 
 const getStoredChallenge = async (id: string) => {
   const store = getStore({ name: DAILY_CHALLENGES_STORE, consistency: "strong" });
-  return store.get(id, { type: "json" }) as Promise<DailyChallenge | null>;
+  return store.get(`${DAILY_CHALLENGE_VERSION}-${id}`, { type: "json" }) as Promise<DailyChallenge | null>;
 };
 
 const storeChallenge = async (id: string, challenge: DailyChallenge) => {
   const store = getStore({ name: DAILY_CHALLENGES_STORE, consistency: "strong" });
-  const result = await store.setJSON(id, challenge, { onlyIfNew: true });
+  const result = await store.setJSON(`${DAILY_CHALLENGE_VERSION}-${id}`, challenge, { onlyIfNew: true });
 
   if (result.modified) {
     return challenge;
