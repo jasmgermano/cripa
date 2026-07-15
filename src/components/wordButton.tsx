@@ -7,6 +7,7 @@ interface WordButtonProps {
   highlight: number;
   focusedIndex: number | null;
   focusedRow: number | null;
+  guesses: { [key: number]: string };
   setFocus: (row: number, index: number) => void;
 }
 
@@ -15,6 +16,7 @@ export default function WordButton({
   id,
   focusedIndex,
   focusedRow,
+  guesses,
   setFocus
 }: Readonly<WordButtonProps>) {
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]); // Refs for buttons
@@ -70,7 +72,9 @@ export default function WordButton({
                 <span className="text-xs text-left w-full pl-1">
                   {!cell.isTermLetter ? cell.number : '?'}
                 </span>
-                <span className={`text-xl h-7 letter-${cell.number} bg-none`}></span>
+                <span className={`text-xl h-7 letter-${cell.number} bg-none`}>
+                  {guesses[cell.number]?.toUpperCase() ?? ""}
+                </span>
                 <input type="text" className="hidden" id="hiddenInput" />
               </button>
             ) : (

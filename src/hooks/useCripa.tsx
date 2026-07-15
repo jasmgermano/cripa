@@ -34,6 +34,7 @@ export default function useCripa(mode: GameMode = "random") {
     const [isMobile, setIsMobile] = useState<boolean>();
     const [currentCuriosity, setCurrentCuriosity] = useState<{ text: string; link?: string } | null>(null);
     const [dailyId, setDailyId] = useState<string | null>(null);
+    const [dailyGuessesReady, setDailyGuessesReady] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     // Função para buscar os dados das palavras
     const fetchWordData = async () => {
@@ -45,7 +46,34 @@ export default function useCripa(mode: GameMode = "random") {
                 }
 
                 const challenge = await response.json() as DailyChallengeData;
+                const guessesStorageKey = `cripa-daily-guesses-${challenge.id}`;
+                const storedGuesses = window.localStorage.getItem(guessesStorageKey);
+                const restoredGuesses: { [key: number]: string } = {};
+
+                if (storedGuesses) {
+                    try {
+                        const parsedGuesses = JSON.parse(storedGuesses) as Record<string, unknown>;
+                        Object.entries(parsedGuesses).forEach(([storedNumber, storedLetter]) => {
+                            const number = Number(storedNumber);
+                            if (
+                                Number.isInteger(number)
+                                && number !== 0
+                                && number >= -challenge.solutions.length
+                                && number <= 26
+                                && typeof storedLetter === "string"
+                                && /^[a-z]$/.test(storedLetter)
+                            ) {
+                                restoredGuesses[number] = storedLetter;
+                            }
+                        });
+                    } catch (error) {
+                        console.warn("Não foi possível restaurar o preenchimento diário.", error);
+                    }
+                }
+
                 setDailyId(challenge.id);
+                setTrys(restoredGuesses);
+                setDailyGuessesReady(true);
                 setTerm(normalizeText(challenge.term));
                 setSolutions(challenge.solutions);
                 setAlphabetMap(challenge.alphabetMap);
@@ -146,6 +174,11 @@ export default function useCripa(mode: GameMode = "random") {
             getSolutions();
         }
     }, [data, mode]);
+
+    useEffect(() => {
+        if (mode !== "daily" || !dailyId || !dailyGuessesReady) return;
+        window.localStorage.setItem(`cripa-daily-guesses-${dailyId}`, JSON.stringify(Trys));
+    }, [Trys, dailyId, dailyGuessesReady, mode]);
 
     // Função para remover acentos e caracteres especiais
     const normalizeText = (text: string) => {
@@ -456,5 +489,5 @@ export default function useCripa(mode: GameMode = "random") {
         (_, index) => Trys[-(index + 1)]?.toUpperCase() ?? ""
     );
 
-    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, termProgress, loading, loadError, dailyId, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
+    return { data, solutions, handleKeyUp, processLetterInput, generateAlphabetMap, resultArray, alphabetMap, term, termProgress, guesses: Trys, loading, loadError, dailyId, handleVerify, termTip, soltionsTips, isAllCorrect, setIsAllCorrect, correctLetters, isMobile, currentCuriosity };
 }

@@ -55,6 +55,7 @@ export default function InstructionsModal({ isOpen, onClose }: InstructionsModal
 
       <ul className="list-disc space-y-1 pl-5 pb-4">
         <li>As casas destacadas em verde formam uma palavra na vertical.</li>
+        <li>A visualização da palavra, fixa no topo, apenas repete essas letras enquanto você preenche. Ele não revela se a palavra está correta.</li>
         <li>Não há diferenciação de letras com acentuação. Exemplo: “A” e “Á” são consideradas iguais.</li>
         <li>Depois de preencher as palavras, clique em “Verificar”. As respostas incorretas ficarão vermelhas.</li>
       </ul>

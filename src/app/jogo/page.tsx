@@ -10,6 +10,7 @@ import Modal from "@/components/modal";
 import Menu from "@/components/menu";
 import Footer from "@/components/footer";
 import InstructionsModal from "@/components/instructionsModal";
+import DailyResultShare from "@/components/dailyResultShare";
 
 interface GameProps {
   searchParams?: { modo?: string };
@@ -25,12 +26,13 @@ const formatTime = (totalSeconds: number) => {
 
 export default function Game({ searchParams }: GameProps) {
   const isDaily = searchParams?.modo === "diario";
-  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, termProgress, loading, loadError, dailyId, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa(isDaily ? "daily" : "random");
+  const { solutions, processLetterInput, handleKeyUp, generateAlphabetMap, resultArray, termProgress, guesses, loading, loadError, dailyId, handleVerify, soltionsTips, termTip, isAllCorrect, setIsAllCorrect, isMobile, currentCuriosity } = useCripa(isDaily ? "daily" : "random");
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(true);
   const [focusedRow, setFocusedRow] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [dailyFinishedSeconds, setDailyFinishedSeconds] = useState<number | null>(null);
   const totalRows = solutions.length;
   const totalColumns = 8;
 
@@ -80,26 +82,50 @@ export default function Game({ searchParams }: GameProps) {
   useEffect(() => {
     if (!isDaily || loading || !dailyId) return;
 
-    const storageKey = `cripa-daily-start-${dailyId}`;
-    const storedStart = Number(window.localStorage.getItem(storageKey));
+    const startStorageKey = `cripa-daily-start-${dailyId}`;
+    const finishStorageKey = `cripa-daily-finish-${dailyId}`;
+    const storedFinishValue = window.localStorage.getItem(finishStorageKey);
+
+    if (storedFinishValue !== null) {
+      const storedFinish = Number(storedFinishValue);
+      if (Number.isFinite(storedFinish) && storedFinish >= 0) {
+        setDailyFinishedSeconds(storedFinish);
+        setElapsedSeconds(storedFinish);
+        return;
+      }
+    }
+
+    const storedStart = Number(window.localStorage.getItem(startStorageKey));
     const start = Number.isFinite(storedStart) && storedStart > 0 ? storedStart : Date.now();
 
     if (!storedStart) {
-      window.localStorage.setItem(storageKey, String(start));
+      window.localStorage.setItem(startStorageKey, String(start));
     }
 
     const updateTimer = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - start) / 1000)));
-    updateTimer();
 
-    if (isAllCorrect) return;
+    if (isAllCorrect) {
+      const finishSeconds = Math.max(0, Math.floor((Date.now() - start) / 1000));
+      window.localStorage.setItem(finishStorageKey, String(finishSeconds));
+      setDailyFinishedSeconds(finishSeconds);
+      setElapsedSeconds(finishSeconds);
+      return;
+    }
+
+    if (dailyFinishedSeconds !== null) {
+      setElapsedSeconds(dailyFinishedSeconds);
+      return;
+    }
+
+    updateTimer();
 
     const interval = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(interval);
-  }, [isDaily, loading, dailyId, isAllCorrect]);
+  }, [isDaily, loading, dailyId, isAllCorrect, dailyFinishedSeconds]);
 
   useEffect(() => {
     setShowSuccessModal(isAllCorrect);
-  });
+  }, [isAllCorrect]);
 
   const toggleInstructions = () => {
     setInstructionsOpen(!isInstructionsOpen);
@@ -157,31 +183,35 @@ export default function Game({ searchParams }: GameProps) {
             </time>
           </div>
         )}
-        <div className="hint-bar flex flex-col">
-          <section className="w-full sm:px-4 sm:pt-3" aria-label="Progresso da palavra secreta">
-            <p className="mb-2 text-center text-xs font-bold uppercase tracking-[0.16em] sm:text-sm">
-              Palavra secreta
-            </p>
-            <div
-              className="mx-auto grid w-full max-w-lg gap-1 sm:gap-2"
-              style={{ gridTemplateColumns: `repeat(${termProgress.length}, minmax(0, 1fr))` }}
-            >
-              {termProgress.map((letter, index) => (
-                <span
-                  key={index}
-                  className={`flex h-6 min-w-0 items-center justify-center border-b-2 border-custom-gray text-[10px] font-bold sm:h-8 sm:text-sm ${letter ? "bg-custom-green" : ""}`}
-                  aria-label={`Letra ${index + 1}${letter ? `: ${letter}` : ": ainda não preenchida"}`}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          </section>
-
-          <div className="py-4 text-center text-base sm:text-md flex flex-col sm:flex-row items-center">
-            <span className="font-bold">Dica:&nbsp;</span>
-            <span>{termTip[0]?.clue}</span>
+        <section
+          className="sticky top-2 z-30 w-full rounded-xl border-2 border-custom-gray bg-custom-beige px-3 py-3 shadow-custom sm:px-6"
+          aria-label="Espelho do preenchimento da palavra secreta"
+        >
+          <p className="text-center text-xs font-black uppercase tracking-[0.14em] sm:text-sm">
+            Visualização da palavra
+          </p>
+          <p className="mb-3 mt-1 text-center text-[11px] font-semibold leading-tight sm:text-sm">
+            Veja aqui as letras que você colocou na palavra vertical!
+          </p>
+          <div
+            className="mx-auto grid w-full max-w-lg gap-1 sm:gap-2"
+            style={{ gridTemplateColumns: `repeat(${termProgress.length}, minmax(0, 1fr))` }}
+          >
+            {termProgress.map((letter, index) => (
+              <span
+                key={index}
+                className={`flex h-6 min-w-0 items-center justify-center border-b-2 border-custom-gray text-[10px] font-bold sm:h-8 sm:text-sm ${letter ? "bg-custom-pink" : ""}`}
+                aria-label={`Letra ${index + 1}${letter ? `: ${letter}` : ": ainda não preenchida"}`}
+              >
+                {letter}
+              </span>
+            ))}
           </div>
+        </section>
+
+        <div className="hint-bar justify-center py-4 text-center text-base sm:text-md flex-col sm:flex-row">
+          <span className="font-bold">Dica:&nbsp;</span>
+          <span>{termTip[0]?.clue}</span>
         </div>
 
         <div className="overflow-x-auto w-full">
@@ -203,6 +233,7 @@ export default function Game({ searchParams }: GameProps) {
                     highlight={rowIndex}
                     focusedIndex={focusedIndex}
                     focusedRow={focusedRow}
+                    guesses={guesses}
                     setFocus={(newRow: number, newIndex: number) => {
                       setFocusedRow(newRow);
                       setFocusedIndex(newIndex);
@@ -253,23 +284,32 @@ export default function Game({ searchParams }: GameProps) {
 
         {showSuccessModal && (
           <Modal isOpen={isAllCorrect} onClose={() => setIsAllCorrect(false)} color="custom-green">
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center justify-center gap-3 mb-2">
               <h2 className="text-2xl font-bold">Parabéns!</h2>
               <Image src={Star} alt="Estrela" className="h-5 w-5" />
             </div>
-            <p className="text-xl">🎉​ Divou! Você acertou todas as palavras! 🎉​</p>
-            {isDaily && (
-              <div className="mt-4 rounded-xl border-2 border-custom-gray bg-custom-pink px-5 py-3 text-center shadow-custom">
-                <p className="text-sm font-bold uppercase tracking-wider">Seu tempo</p>
-                <p className="mt-1 text-3xl font-black tabular-nums">{formatTime(elapsedSeconds)}</p>
-              </div>
+            <p className="text-xl text-center">🎉​ Divou! Você acertou todas as palavras! 🎉​</p>
+            {isDaily && (             
+                <div className="mt-4 rounded-xl border-2 border-custom-gray bg-custom-pink px-5 py-3 text-center shadow-custom">
+                  <p className="text-sm font-bold uppercase tracking-wider">Seu tempo</p>
+                  <p className="mt-1 text-3xl font-black tabular-nums">{formatTime(elapsedSeconds)}</p>
+                </div>
             )}
-            <div className="w-full flex justify-center mt-4">
+            <div className="mt-7 flex w-full flex-wrap justify-center gap-3">
+              {isDaily && (
+                <DailyResultShare dailyId={dailyId} elapsedSeconds={elapsedSeconds} />
+              )}
               <Button
-                text={isDaily ? "Voltar para o início" : "Carregar novo jogo"}
-                color="custom-pink"
-                onClick={() => isDaily ? window.location.href = "/" : window.location.reload()}
+                text="Voltar para o início"
+                color={isDaily ? "custom-green" : "custom-pink"}
+                onClick={() => window.location.href = "/"}
               />
+              {!isDaily && (
+                <Button
+                  text="Carregar novo jogo"
+                  onClick={() => window.location.reload()}
+                />
+              )}
             </div>
           </Modal>
         )}
