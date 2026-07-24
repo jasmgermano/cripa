@@ -120,7 +120,7 @@ export default function DailyResultShare({ dailyId, elapsedSeconds }: Readonly<D
   }, [dailyId, elapsedSeconds, isShareModalOpen]);
 
   const shareOnTwitter = () => {
-    const text = `eu resolvi um criptograma em ${formatTime(elapsedSeconds)} minutos! você acha que consegue fazer melhor? ★!🔗`;
+    const text = `eu resolvi um criptograma em ${formatTime(elapsedSeconds)} minutos! você acha que consegue fazer melhor? 🔗`;
     const params = new URLSearchParams({ text, url: window.location.origin });
     window.open(`https://twitter.com/intent/tweet?${params.toString()}`, "_blank", "noopener,noreferrer");
   };
